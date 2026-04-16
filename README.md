@@ -24,12 +24,13 @@
 </p><br>
 
 <p align="center">
-<img width="1512" height="750" alt="image" src="https://github.com/user-attachments/assets/adcc5e39-3a84-4c27-a4c2-4c49392ab996" />
+<img width="1512" height="750" alt="image" src="https://github.com/user-attachments/assets/a61d83fc-9bbd-4bf6-8865-8377829149f3" />
 
 
 <br>
   <em>Fig. 3: Wearable Enclosure </em>
 </p><br>
+
 
 
 
