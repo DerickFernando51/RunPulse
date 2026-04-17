@@ -7,12 +7,13 @@
 <br>
 
 <p align="center">
-<img width="1512" height="750" alt="image" src="https://github.com/user-attachments/assets/ea4b9a30-2b6a-4fb9-8ddd-9a285e690715" />
+<img width="1512" height="750" alt="image" src="https://github.com/user-attachments/assets/61a7f43b-b0a4-40bc-94da-cbf38a159fd5" />
 
 
 <br>
   <em>Fig. 1: Circuit Diagram</em>
 </p><br>
+
 
 
 <p align="center">
