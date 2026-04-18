@@ -24,6 +24,7 @@
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
 #include "string.h"
+extern USBD_HandleTypeDef hUsbDeviceFS;
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -33,6 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+
 
 /* USER CODE END PD */
 
@@ -44,10 +46,13 @@
 /* Private variables ---------------------------------------------------------*/
 I2C_HandleTypeDef hi2c1;
 I2C_HandleTypeDef hi2c3;
+DMA_HandleTypeDef hdma_i2c1_rx;
+DMA_HandleTypeDef hdma_i2c1_tx;
 
 SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
+volatile uint8_t i2c_done = 0;
 
 /* USER CODE END PV */
 
@@ -55,6 +60,7 @@ SPI_HandleTypeDef hspi1;
 void SystemClock_Config(void);
 void PeriphCommonClock_Config(void);
 static void MX_GPIO_Init(void);
+static void MX_DMA_Init(void);
 static void MX_I2C1_Init(void);
 static void MX_I2C3_Init(void);
 static void MX_SPI1_Init(void);
@@ -100,8 +106,7 @@ void MAX30102_Init(void)
     HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0A,
                       I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
 
-    // 5. LED Pulse Amplitude (IMPORTANT!)
-    // increase power → stable readings
+    // 5. LED Pulse Amplitude
     data = 0x24;   // RED LED current
     HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0C,
                       I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
@@ -110,7 +115,7 @@ void MAX30102_Init(void)
     HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0D,
                       I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
 
-    // 6. Clear FIFO pointers (VERY IMPORTANT)
+    // 6. Clear FIFO pointers
     data = 0x00;
     HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x04,
                       I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // WR PTR
@@ -121,6 +126,35 @@ void MAX30102_Init(void)
     HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x06,
                       I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // RD PTR
 }
+
+
+void MAX30102_Read_FIFO_DMA(void)
+{
+    i2c_done = 0;
+
+    HAL_I2C_Mem_Read_DMA(&hi2c1,
+                         MAX30102_ADDR,
+                         0x07,                    // FIFO data register
+                         I2C_MEMADD_SIZE_8BIT,
+                         fifo_data,
+                         6);                      // 6 bytes (RED + IR)
+}
+
+void MAX30102_Process_Data(void)
+{
+    red = ((uint32_t)(fifo_data[0] & 0x03) << 16) |
+          ((uint32_t)fifo_data[1] << 8) |
+          fifo_data[2];
+
+    ir  = ((uint32_t)(fifo_data[3] & 0x03) << 16) |
+          ((uint32_t)fifo_data[4] << 8) |
+          fifo_data[5];
+
+    sprintf(msg, "RED: %lu IR: %lu\r\n", red, ir);
+    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+}
+
+
 
 /* USER CODE END 0 */
 
@@ -156,13 +190,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_I2C1_Init();
   MX_I2C3_Init();
   MX_SPI1_Init();
   MX_USB_Device_Init();
   /* USER CODE BEGIN 2 */
-  HAL_Delay(1000); // wait for USB
+
   MAX30102_Init();
+  HAL_Delay(500);
+
 
   /* USER CODE END 2 */
 
@@ -170,33 +207,14 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  // Read 6 bytes from FIFO
-	          HAL_I2C_Mem_Read(&hi2c1, MAX30102_ADDR, 0x07, 1,
-	                           fifo_data, 6, 100);
+	  MAX30102_Read_FIFO_DMA();
 
-	          red = ((uint32_t)fifo_data[0] << 16) |
-	                ((uint32_t)fifo_data[1] << 8)  |
-	                fifo_data[2];
+	     // wait for DMA complete
+	     while (!i2c_done);
 
-	          ir  = ((uint32_t)fifo_data[3] << 16) |
-	                ((uint32_t)fifo_data[4] << 8)  |
-	                fifo_data[5];
+	     MAX30102_Process_Data();
 
-	          red &= 0x03FFFF;
-	          ir  &= 0x03FFFF;
-
-	          sprintf(msg, "RED: %lu IR: %lu\r\n", red, ir);
-
-	          static uint32_t last_tx = 0;
-
-	          if (HAL_GetTick() - last_tx > 200)
-	          {
-	              last_tx = HAL_GetTick();
-
-	              CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
-	          }
-
-	          HAL_Delay(20);
+	     HAL_Delay(50);
 
     /* USER CODE END WHILE */
 
@@ -398,11 +416,11 @@ static void MX_SPI1_Init(void)
   hspi1.Instance = SPI1;
   hspi1.Init.Mode = SPI_MODE_MASTER;
   hspi1.Init.Direction = SPI_DIRECTION_2LINES;
-  hspi1.Init.DataSize = SPI_DATASIZE_4BIT;
+  hspi1.Init.DataSize = SPI_DATASIZE_8BIT;
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_2;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -416,6 +434,26 @@ static void MX_SPI1_Init(void)
   /* USER CODE BEGIN SPI1_Init 2 */
 
   /* USER CODE END SPI1_Init 2 */
+
+}
+
+/**
+  * Enable DMA controller clock
+  */
+static void MX_DMA_Init(void)
+{
+
+  /* DMA controller clock enable */
+  __HAL_RCC_DMAMUX1_CLK_ENABLE();
+  __HAL_RCC_DMA1_CLK_ENABLE();
+
+  /* DMA interrupt init */
+  /* DMA1_Channel1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  /* DMA1_Channel2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
 
@@ -437,7 +475,10 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOA_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4|GPIO_PIN_5, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_4, GPIO_PIN_SET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : PA0 PA2 PA3 PA8 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_8;
@@ -458,6 +499,16 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
+{
+    if (hi2c->Instance == I2C1)
+    {
+        i2c_done = 1;
+    }
+}
+
+
 
 /* USER CODE END 4 */
 
