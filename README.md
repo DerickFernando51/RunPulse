@@ -49,13 +49,14 @@
 
 
 <p align="center">
-<img width="750" height="700" alt="image" src="https://github.com/user-attachments/assets/06e32668-29d8-4ba3-a8ed-e185d397cd00" />
+<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/0abab08e-0662-4042-9c19-15566eed16a5" />
 
 <br>
   <em>Fig. 6: MCU peripheral assignments </em>
 </p><br>
 
  
+
 
 
 
