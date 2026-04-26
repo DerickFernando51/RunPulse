@@ -23,12 +23,13 @@
 #include "custom_stm.h"
 
 /* USER CODE BEGIN Includes */
+#include "usbd_cdc_if.h"
 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 typedef struct{
-  uint16_t  CustomBpserviceHdle;                    /**< bpService handle */
+  uint16_t  CustomRpserviceHdle;                    /**< rpService handle */
   uint16_t  CustomCharwriteHdle;                  /**< charWrite handle */
 /* USER CODE BEGIN Context */
   /* Place holder for Characteristic Descriptors Handle*/
@@ -103,7 +104,7 @@ do {\
     uuid_struct[12] = uuid_12; uuid_struct[13] = uuid_13; uuid_struct[14] = uuid_14; uuid_struct[15] = uuid_15; \
 }while(0)
 
-#define COPY_BPSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
+#define COPY_RPSERVICE_UUID(uuid_struct)          COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0xcc,0x7a,0x48,0x2a,0x98,0x4a,0x7f,0x2e,0xd5,0xb3,0xe5,0x8f)
 #define COPY_CHARWRITE_UUID(uuid_struct)    COPY_UUID_128(uuid_struct,0x00,0x00,0x00,0x00,0x8e,0x22,0x45,0x41,0x9d,0x4c,0x21,0xed,0xae,0x82,0xed,0x19)
 
 /* USER CODE BEGIN PF */
@@ -145,6 +146,18 @@ static SVCCTL_EvtAckStatus_t Custom_STM_Event_Handler(void *Event)
           {
             return_value = SVCCTL_EvtAckFlowEnable;
             /* USER CODE BEGIN CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
+
+            uint8_t buf[3];
+
+               buf[0] = attribute_modified->Attr_Data[0];
+               buf[1] = '\r';
+               buf[2] = '\n';
+
+               while (CDC_Transmit_FS(buf, 3) == USBD_BUSY);
+
+           // CDC_Transmit_FS(attribute_modified->Attr_Data, attribute_modified->Attr_Data_Length);
+
+
 
             /* USER CODE END CUSTOM_STM_Service_1_Char_1_ACI_GATT_ATTRIBUTE_MODIFIED_VSEVT_CODE */
           } /* if (attribute_modified->Attr_Handle == (CustomContext.CustomCharwriteHdle + CHARACTERISTIC_VALUE_ATTRIBUTE_OFFSET))*/
@@ -242,10 +255,10 @@ void SVCCTL_InitCustomSvc(void)
   SVCCTL_RegisterSvcHandler(Custom_STM_Event_Handler);
 
   /**
-   *          bpService
+   *          rpService
    *
    * Max_Attribute_Records = 1 + 2*1 + 1*no_of_char_with_notify_or_indicate_property + 1*no_of_char_with_broadcast_property
-   * service_max_attribute_record = 1 for bpService +
+   * service_max_attribute_record = 1 for rpService +
    *                                2 for charWrite +
    *                              = 3
    *
@@ -259,26 +272,26 @@ void SVCCTL_InitCustomSvc(void)
 
   /* USER CODE END SVCCTL_InitService1 */
 
-  COPY_BPSERVICE_UUID(uuid.Char_UUID_128);
+  COPY_RPSERVICE_UUID(uuid.Char_UUID_128);
   ret = aci_gatt_add_service(UUID_TYPE_128,
                              (Service_UUID_t *) &uuid,
                              PRIMARY_SERVICE,
                              max_attr_record,
-                             &(CustomContext.CustomBpserviceHdle));
+                             &(CustomContext.CustomRpserviceHdle));
   if (ret != BLE_STATUS_SUCCESS)
   {
-    APP_DBG_MSG("  Fail   : aci_gatt_add_service command: bpService, error code: 0x%x \n\r", ret);
+    APP_DBG_MSG("  Fail   : aci_gatt_add_service command: rpService, error code: 0x%x \n\r", ret);
   }
   else
   {
-    APP_DBG_MSG("  Success: aci_gatt_add_service command: bpService \n\r");
+    APP_DBG_MSG("  Success: aci_gatt_add_service command: rpService \n\r");
   }
 
   /**
    *  charWrite
    */
   COPY_CHARWRITE_UUID(uuid.Char_UUID_128);
-  ret = aci_gatt_add_char(CustomContext.CustomBpserviceHdle,
+  ret = aci_gatt_add_char(CustomContext.CustomRpserviceHdle,
                           UUID_TYPE_128, &uuid,
                           SizeCharwrite,
                           CHAR_PROP_WRITE,
@@ -325,7 +338,7 @@ tBleStatus Custom_STM_App_Update_Char(Custom_STM_Char_Opcode_t CharOpcode, uint8
   {
 
     case CUSTOM_STM_CHARWRITE:
-      ret = aci_gatt_update_char_value(CustomContext.CustomBpserviceHdle,
+      ret = aci_gatt_update_char_value(CustomContext.CustomRpserviceHdle,
                                        CustomContext.CustomCharwriteHdle,
                                        0, /* charValOffset */
                                        SizeCharwrite, /* charValueLen */
@@ -372,7 +385,7 @@ tBleStatus Custom_STM_App_Update_Char_Variable_Length(Custom_STM_Char_Opcode_t C
   {
 
     case CUSTOM_STM_CHARWRITE:
-      ret = aci_gatt_update_char_value(CustomContext.CustomBpserviceHdle,
+      ret = aci_gatt_update_char_value(CustomContext.CustomRpserviceHdle,
                                        CustomContext.CustomCharwriteHdle,
                                        0, /* charValOffset */
                                        size, /* charValueLen */
@@ -422,7 +435,7 @@ tBleStatus Custom_STM_App_Update_Char_Ext(uint16_t Connection_Handle, Custom_STM
       /* USER CODE BEGIN Updated_Length_Service_1_Char_1*/
 
       /* USER CODE END Updated_Length_Service_1_Char_1*/
-      ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomBpserviceHdle, CustomContext.CustomCharwriteHdle, SizeCharwrite, pPayload);
+      ret = Generic_STM_App_Update_Char_Ext(Connection_Handle, CustomContext.CustomRpserviceHdle, CustomContext.CustomCharwriteHdle, SizeCharwrite, pPayload);
 
       if (ret != BLE_STATUS_SUCCESS)
       {

@@ -34,7 +34,7 @@ extern "C" {
 /* Exported types ------------------------------------------------------------*/
 typedef enum
 {
-  /* bpService */
+  /* rpService */
   CUSTOM_STM_CHARWRITE,
 } Custom_STM_Char_Opcode_t;
 

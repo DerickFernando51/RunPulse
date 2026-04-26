@@ -80,6 +80,7 @@ static void MX_RF_Init(void);
 char *data = "Hello DERA1\r\n";
 
 #define MAX30102_ADDR (0x57 << 1)
+#define MAX17048_ADDR (0x36 << 1)
 
 uint8_t fifo_data[6];
 uint32_t red, ir;
@@ -162,6 +163,51 @@ void MAX30102_Process_Data(void)
 }
 
 
+void MAX17048_Read_VCELL_Test(void)
+{
+    uint8_t data[2];
+
+    if (HAL_I2C_Mem_Read(&hi2c3,
+                         MAX17048_ADDR,
+                         0x02,
+                         I2C_MEMADD_SIZE_8BIT,
+                         data,
+                         2,
+                         100) == HAL_OK)
+    {
+    	uint16_t raw = (data[0] << 8) | data[1];
+    	        raw >>= 4;
+
+    	uint32_t voltage_mV = (raw * 125) / 100;
+
+    	float voltage_V = voltage_mV / 1000.0f;
+
+    	sprintf(msg, "VCELL: %.3f V\r\n", voltage_V);
+    }
+    else
+    {
+        sprintf(msg, "VCELL READ FAIL\r\n");
+    }
+
+    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+}
+
+void I2C_Check_MAX17048(void)
+{
+    char msg[64];
+
+    if (HAL_I2C_IsDeviceReady(&hi2c3, MAX17048_ADDR, 3, 100) == HAL_OK)
+    {
+        sprintf(msg, "MAX17048 FOUND (0x36)\r\n");
+    }
+    else
+    {
+        sprintf(msg, "MAX17048 NOT FOUND\r\n");
+    }
+
+    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+}
+
 
 /* USER CODE END 0 */
 
@@ -207,12 +253,13 @@ int main(void)
   MX_I2C3_Init();
   MX_SPI1_Init();
   MX_USB_Device_Init();
+  HAL_Delay(1000);
   MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
 
-//  MAX30102_Init();
-//  HAL_Delay(500);
+  MAX30102_Init();
+  HAL_Delay(500);
 
 
 
@@ -220,24 +267,27 @@ int main(void)
   /* USER CODE END 2 */
 
   /* Init code for STM32_WPAN */
-  MX_APPE_Init();
+  //MX_APPE_Init();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
 
-	  //MAX30102_Read_FIFO_DMA();
 
-	     // wait for DMA complete
-//	     while (!i2c_done);
-//
-//	     MAX30102_Process_Data();
+	  MAX30102_Read_FIFO_DMA();
 
-//	     HAL_Delay(50);
+	 // wait for DMA complete
+     while (!i2c_done);
+     MAX30102_Process_Data();
+     HAL_Delay(200);
+
+
+     MAX17048_Read_VCELL_Test();
+	 HAL_Delay(200);
 
     /* USER CODE END WHILE */
-    MX_APPE_Process();
+    //MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }

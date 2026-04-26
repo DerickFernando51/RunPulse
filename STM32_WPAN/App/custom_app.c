@@ -35,7 +35,7 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef struct
 {
-  /* bpService */
+  /* rpService */
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
 
   /* USER CODE END CUSTOM_APP_Context_t */
@@ -76,7 +76,7 @@ uint16_t Connection_Handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-/* bpService */
+/* rpService */
 
 /* USER CODE BEGIN PFP */
 
@@ -94,7 +94,7 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
-    /* bpService */
+    /* rpService */
     case CUSTOM_STM_CHARWRITE_WRITE_EVT:
       /* USER CODE BEGIN CUSTOM_STM_CHARWRITE_WRITE_EVT */
 
@@ -174,7 +174,7 @@ void Custom_APP_Init(void)
  *
  *************************************************************/
 
-/* bpService */
+/* rpService */
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTIONS*/
 
