@@ -24,7 +24,9 @@
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
 #include "string.h"
+#include "stm32_lpm.h"
 extern USBD_HandleTypeDef hUsbDeviceFS;
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -57,6 +59,9 @@ SPI_HandleTypeDef hspi1;
 
 /* USER CODE BEGIN PV */
 volatile uint8_t i2c_done = 0;
+volatile uint8_t i2c_busy = 0;
+volatile uint8_t usb_ready = 0;
+char usb_buffer[64];
 
 /* USER CODE END PV */
 
@@ -138,28 +143,33 @@ void MAX30102_Init(void)
 
 void MAX30102_Read_FIFO_DMA(void)
 {
+    if (i2c_busy) return;
+
     i2c_done = 0;
+    i2c_busy = 1;
 
     HAL_I2C_Mem_Read_DMA(&hi2c1,
                          MAX30102_ADDR,
-                         0x07,                    // FIFO data register
+                         0x07,
                          I2C_MEMADD_SIZE_8BIT,
                          fifo_data,
-                         6);                      // 6 bytes (RED + IR)
+                         6);
 }
+
 
 void MAX30102_Process_Data(void)
 {
+
     red = ((uint32_t)(fifo_data[0] & 0x03) << 16) |
           ((uint32_t)fifo_data[1] << 8) |
           fifo_data[2];
-
     ir  = ((uint32_t)(fifo_data[3] & 0x03) << 16) |
           ((uint32_t)fifo_data[4] << 8) |
           fifo_data[5];
 
-    sprintf(msg, "RED: %lu IR: %lu\r\n", red, ir);
-    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+    snprintf(usb_buffer, sizeof(usb_buffer),
+             "RED:%lu IR:%lu\r\n", red, ir);
+    usb_ready = 1;
 }
 
 
@@ -209,6 +219,17 @@ void I2C_Check_MAX17048(void)
 }
 
 
+static void BusyDelay(uint32_t ms)
+{
+    uint32_t start = HAL_GetTick();
+    while ((HAL_GetTick() - start) < ms);
+}
+
+uint8_t USB_IsConnected(void)
+{
+    return (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED);
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -248,46 +269,67 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_DMA_Init();
-  MX_I2C1_Init();
-  MX_I2C3_Init();
-  MX_SPI1_Init();
+  //MX_DMA_Init();
+  //MX_I2C1_Init();
+  //MX_I2C3_Init();
+  //MX_SPI1_Init();
   MX_USB_Device_Init();
-  HAL_Delay(1000);
   MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
 
-  MAX30102_Init();
-  HAL_Delay(500);
-
-
+  //MAX30102_Init();
+  BusyDelay(3000);
 
 
   /* USER CODE END 2 */
 
   /* Init code for STM32_WPAN */
-  //MX_APPE_Init();
+  MX_APPE_Init();
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	  static uint32_t last_print = 0;
+	  	       if (USB_IsConnected() && (HAL_GetTick() - last_print >= 1000))
+	  	       {
+	  	           last_print = HAL_GetTick();
+	  	           CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
+	  	       }
 
 
-	  MAX30102_Read_FIFO_DMA();
+//	  static uint32_t last_sample = 0;
+//	      if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
+//	      {
+//	          last_sample = HAL_GetTick();
+//	          MAX30102_Read_FIFO_DMA();
+//	      }
+//
+//	      if (i2c_done)
+//	      {
+//	          i2c_done = 0;
+//	          MAX30102_Process_Data();
+//	      }
+//
+//	      if (usb_ready)
+//	      {
+//	          if (CDC_Transmit_FS((uint8_t*)usb_buffer, strlen(usb_buffer)) == USBD_OK)
+//	              usb_ready = 0;
+//	      }
 
-	 // wait for DMA complete
-     while (!i2c_done);
-     MAX30102_Process_Data();
-     HAL_Delay(200);
 
+	     // MAX17048
+//	     static uint32_t last_tick = 0;
+//	     if (HAL_GetTick() - last_tick > 500)
+//	     {
+//	         last_tick = HAL_GetTick();
+//	         MAX17048_Read_VCELL_Test();
+//	     }
 
-     MAX17048_Read_VCELL_Test();
-	 HAL_Delay(200);
 
     /* USER CODE END WHILE */
-    //MX_APPE_Process();
+    MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -303,6 +345,11 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
+  /** Configure LSE Drive Capability
+  */
+  HAL_PWR_EnableBkUpAccess();
+  __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_MEDIUMHIGH);
+
   /** Configure the main internal regulator output voltage
   */
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
@@ -310,13 +357,13 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI
-                              |RCC_OSCILLATORTYPE_LSI1|RCC_OSCILLATORTYPE_HSE
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI1
+                              |RCC_OSCILLATORTYPE_HSE|RCC_OSCILLATORTYPE_LSE
                               |RCC_OSCILLATORTYPE_MSI;
   RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.MSIState = RCC_MSI_ON;
-  RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.MSICalibrationValue = RCC_MSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.MSIClockRange = RCC_MSIRANGE_6;
@@ -349,6 +396,10 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
+  /** Enable MSI Auto calibration
+  */
+  HAL_RCCEx_EnableMSIPLLMode();
 }
 
 /**
@@ -358,6 +409,7 @@ void SystemClock_Config(void)
 void PeriphCommonClock_Config(void)
 {
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
+  LL_HSEM_1StepLock( HSEM, 5 );
 
   /** Initializes the peripherals clock
   */
@@ -551,7 +603,7 @@ static void MX_RTC_Init(void)
 
   /** Enable the WakeUp
   */
-  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
+  if (HAL_RTCEx_SetWakeUpTimer(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
   {
     Error_Handler();
   }
@@ -613,10 +665,10 @@ static void MX_DMA_Init(void)
 
   /* DMA interrupt init */
   /* DMA1_Channel1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
   /* DMA1_Channel2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 0, 0);
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, 6, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
 }
@@ -669,9 +721,9 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
     if (hi2c->Instance == I2C1)
     {
         i2c_done = 1;
+        i2c_busy = 0;
     }
 }
-
 
 
 /* USER CODE END 4 */
