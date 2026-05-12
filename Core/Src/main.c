@@ -25,6 +25,7 @@
 #include "usbd_cdc_if.h"
 #include "string.h"
 #include "stm32_lpm.h"
+#include "math.h"
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE END Includes */
@@ -62,6 +63,18 @@ volatile uint8_t i2c_done = 0;
 volatile uint8_t i2c_busy = 0;
 volatile uint8_t usb_ready = 0;
 char usb_buffer[64];
+
+
+#define BUFFER_SIZE     100
+#define FS              10
+
+uint32_t red_buf[BUFFER_SIZE];
+uint32_t ir_buf[BUFFER_SIZE];
+uint8_t  buf_idx = 0;
+uint8_t  buf_full = 0;
+
+float    hr_result  = 0.0f;
+float    spo2_result = 0.0f;
 
 /* USER CODE END PV */
 
@@ -156,24 +169,123 @@ void MAX30102_Read_FIFO_DMA(void)
                          6);
 }
 
-
-void MAX30102_Process_Data(void)
+//DC removal for HR and spo2
+static float mean_u32(uint32_t *buf, int n)
 {
+    uint64_t sum = 0;
+    for (int i = 0; i < n; i++) sum += buf[i];
+    return (float)sum / n;
+}
 
-    red = ((uint32_t)(fifo_data[0] & 0x03) << 16) |
-          ((uint32_t)fifo_data[1] << 8) |
-          fifo_data[2];
-    ir  = ((uint32_t)(fifo_data[3] & 0x03) << 16) |
-          ((uint32_t)fifo_data[4] << 8) |
-          fifo_data[5];
+//HR calculation using peak detection
+static float calc_hr(uint32_t *buf, int n, int fs)
+{
+    float dc = mean_u32(buf, n);
 
-    snprintf(usb_buffer, sizeof(usb_buffer),
-             "RED:%lu IR:%lu\r\n", red, ir);
-    usb_ready = 1;
+    // Find peaks in IR signal
+    int   peak_count = 0;
+    float prev = (float)buf[0] - dc;
+    float curr, next;
+
+    for (int i = 1; i < n - 1; i++)
+    {
+        curr = (float)buf[i]   - dc;
+        next = (float)buf[i+1] - dc;
+
+        // Simple peak: rising then falling, above a noise threshold
+        if (curr > prev && curr > next && curr > 200.0f)
+            peak_count++;
+
+        prev = curr;
+    }
+
+    // HR = peaks / time_seconds * 60
+    float time_s = (float)n / fs;
+    return (peak_count / time_s) * 60.0f;
+}
+
+// SpO2 calculation from R ratio
+static float calc_spo2(uint32_t *red_b, uint32_t *ir_b, int n)
+{
+    float dc_red = mean_u32(red_b, n);
+    float dc_ir  = mean_u32(ir_b,  n);
+
+    // AC = RMS of AC component
+    float ac_red_sq = 0, ac_ir_sq = 0;
+    for (int i = 0; i < n; i++)
+    {
+        float r = (float)red_b[i] - dc_red;
+        float ir = (float)ir_b[i] - dc_ir;
+        ac_red_sq += r  * r;
+        ac_ir_sq  += ir * ir;
+    }
+    float ac_red = sqrtf(ac_red_sq / n);
+    float ac_ir  = sqrtf(ac_ir_sq  / n);
+
+    if (dc_red < 1.0f || dc_ir < 1.0f || ac_ir < 1.0f)
+        return -1.0f;  // invalid
+
+    float R = (ac_red / dc_red) / (ac_ir / dc_ir);
+
+    // Empirical calibration
+    float spo2 = 110.0f - 25.0f * R;
+
+    if (spo2 > 100.0f) spo2 = 100.0f;
+    if (spo2 <  80.0f) spo2 = -1.0f;  // out of range, finger not on sensor
+
+    return spo2;
 }
 
 
-void MAX17048_Read_VCELL_Test(void)
+void MAX30102_Process(void)
+{
+    static uint32_t last_sample = 0;
+    static uint8_t samples_since_calc = 0;
+
+    // Trigger DMA read every 100ms
+    if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
+    {
+        last_sample = HAL_GetTick();
+        MAX30102_Read_FIFO_DMA();
+    }
+
+    // When DMA read completes
+    if (i2c_done)
+    {
+        i2c_done = 0;
+
+        // Parse raw values
+        red = ((uint32_t)(fifo_data[0] & 0x03) << 16) |
+              ((uint32_t)fifo_data[1] << 8) | fifo_data[2];
+        ir  = ((uint32_t)(fifo_data[3] & 0x03) << 16) |
+              ((uint32_t)fifo_data[4] << 8) | fifo_data[5];
+
+        // Finger detection
+        if (ir < 50000)
+            return;  // no finger, skip
+
+        // Store into ring buffer
+        red_buf[buf_idx % BUFFER_SIZE] = red;
+        ir_buf[buf_idx % BUFFER_SIZE]  = ir;
+        buf_idx++;
+        samples_since_calc++;
+
+        // Calculate once buffer is primed, every 10 new samples (1s)
+        if (buf_idx >= BUFFER_SIZE && samples_since_calc >= 10)
+        {
+            samples_since_calc = 0;
+            hr_result   = calc_hr(ir_buf, BUFFER_SIZE, FS);
+            spo2_result = calc_spo2(red_buf, ir_buf, BUFFER_SIZE);
+
+            snprintf(usb_buffer, sizeof(usb_buffer),
+                     "HR: %.1f bpm  SpO2: %.1f%%\r\n", hr_result, spo2_result);
+            usb_ready = 1;
+        }
+    }
+}
+
+
+void MAX17048_Read_VCELL(void)
 {
     uint8_t data[2];
 
@@ -185,21 +297,21 @@ void MAX17048_Read_VCELL_Test(void)
                          2,
                          100) == HAL_OK)
     {
-    	uint16_t raw = (data[0] << 8) | data[1];
-    	        raw >>= 4;
+        uint16_t raw = (data[0] << 8) | data[1];
+        raw >>= 4;
 
-    	uint32_t voltage_mV = (raw * 125) / 100;
+        uint32_t voltage_mV = (raw * 125) / 100;
 
-    	float voltage_V = voltage_mV / 1000.0f;
-
-    	sprintf(msg, "VCELL: %.3f V\r\n", voltage_V);
+        snprintf(usb_buffer, sizeof(usb_buffer),
+                 "VCELL: %lu.%03lu V\r\n",
+                 voltage_mV / 1000, voltage_mV % 1000);
     }
     else
     {
-        sprintf(msg, "VCELL READ FAIL\r\n");
+        snprintf(usb_buffer, sizeof(usb_buffer), "VCELL READ FAIL\r\n");
     }
 
-    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+    usb_ready = 1;
 }
 
 void I2C_Check_MAX17048(void)
@@ -229,6 +341,9 @@ uint8_t USB_IsConnected(void)
 {
     return (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED);
 }
+
+
+
 
 /* USER CODE END 0 */
 
@@ -293,27 +408,16 @@ int main(void)
   {
 
 	  //USB CDC Test
-	  static uint32_t last_print = 0;
-	  	       if (USB_IsConnected() && (HAL_GetTick() - last_print >= 1000))
-	  	       {
-	  	           last_print = HAL_GetTick();
-	  	           CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
-	  	       }
+//	  static uint32_t last_print = 0;
+//	  	       if (USB_IsConnected() && (HAL_GetTick() - last_print >= 1000))
+//	  	       {
+//	  	           last_print = HAL_GetTick();
+//	  	           CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
+//	  	       }
 
 
 	  //MAX30102
-	  static uint32_t last_sample = 0;
-	      if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
-	      {
-	          last_sample = HAL_GetTick();
-	          MAX30102_Read_FIFO_DMA();
-	      }
-
-	      if (i2c_done)
-	      {
-	          i2c_done = 0;
-	          MAX30102_Process_Data();
-	      }
+	  MAX30102_Process();
 
 	      if (usb_ready)
 	      {
@@ -324,10 +428,10 @@ int main(void)
 
 	     // MAX17048
 	     static uint32_t last_tick = 0;
-	     if (HAL_GetTick() - last_tick > 500)
+	     if (HAL_GetTick() - last_tick > 5000)
 	     {
 	         last_tick = HAL_GetTick();
-	         MAX17048_Read_VCELL_Test();
+	         MAX17048_Read_VCELL();
 	     }
 
 
