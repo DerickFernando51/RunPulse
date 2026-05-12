@@ -269,16 +269,16 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  //MX_DMA_Init();
-  //MX_I2C1_Init();
-  //MX_I2C3_Init();
-  //MX_SPI1_Init();
+  MX_DMA_Init();
+  MX_I2C1_Init();
+  MX_I2C3_Init();
+  MX_SPI1_Init();
   MX_USB_Device_Init();
   MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
 
-  //MAX30102_Init();
+  MAX30102_Init();
   BusyDelay(3000);
 
 
@@ -291,6 +291,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  //USB CDC Test
 	  static uint32_t last_print = 0;
 	  	       if (USB_IsConnected() && (HAL_GetTick() - last_print >= 1000))
 	  	       {
@@ -299,33 +301,34 @@ int main(void)
 	  	       }
 
 
-//	  static uint32_t last_sample = 0;
-//	      if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
-//	      {
-//	          last_sample = HAL_GetTick();
-//	          MAX30102_Read_FIFO_DMA();
-//	      }
-//
-//	      if (i2c_done)
-//	      {
-//	          i2c_done = 0;
-//	          MAX30102_Process_Data();
-//	      }
-//
-//	      if (usb_ready)
-//	      {
-//	          if (CDC_Transmit_FS((uint8_t*)usb_buffer, strlen(usb_buffer)) == USBD_OK)
-//	              usb_ready = 0;
-//	      }
+	  //MAX30102
+	  static uint32_t last_sample = 0;
+	      if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
+	      {
+	          last_sample = HAL_GetTick();
+	          MAX30102_Read_FIFO_DMA();
+	      }
+
+	      if (i2c_done)
+	      {
+	          i2c_done = 0;
+	          MAX30102_Process_Data();
+	      }
+
+	      if (usb_ready)
+	      {
+	          if (CDC_Transmit_FS((uint8_t*)usb_buffer, strlen(usb_buffer)) == USBD_OK)
+	              usb_ready = 0;
+	      }
 
 
 	     // MAX17048
-//	     static uint32_t last_tick = 0;
-//	     if (HAL_GetTick() - last_tick > 500)
-//	     {
-//	         last_tick = HAL_GetTick();
-//	         MAX17048_Read_VCELL_Test();
-//	     }
+	     static uint32_t last_tick = 0;
+	     if (HAL_GetTick() - last_tick > 500)
+	     {
+	         last_tick = HAL_GetTick();
+	         MAX17048_Read_VCELL_Test();
+	     }
 
 
     /* USER CODE END WHILE */
