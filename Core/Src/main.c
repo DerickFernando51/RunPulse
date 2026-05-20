@@ -20,12 +20,15 @@
 #include "main.h"
 #include "usb_device.h"
 
+
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
 #include "string.h"
 #include "stm32_lpm.h"
 #include "math.h"
+#include "max30102.h"
+
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
 /* USER CODE END Includes */
@@ -76,6 +79,8 @@ uint8_t  buf_full = 0;
 float    hr_result  = 0.0f;
 float    spo2_result = 0.0f;
 
+MAX30102_Sample_t sample;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,58 +105,59 @@ char *data = "Hello DERA1\r\n";
 #define MAX30102_ADDR (0x57 << 1)
 #define MAX17048_ADDR (0x36 << 1)
 
+
 uint8_t fifo_data[6];
 uint32_t red, ir;
 char msg[64];
 
 
-void MAX30102_Init(void)
-{
-    uint8_t data;
-
-    // 1. RESET
-    data = 0x40;
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-    HAL_Delay(100);
-
-    // 2. FIFO Configuration
-    // sample averaging = 4, FIFO rollover enabled, almost full = 17
-    data = 0x4F;
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x08,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-
-    // 3. Mode Configuration (SpO2 mode = RED + IR)
-    data = 0x03;
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-
-    // 4. SpO2 Configuration
-    // ADC range = 4096nA, sample rate = 100Hz, pulse width = 411us (18-bit)
-    data = 0x27;
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0A,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-
-    // 5. LED Pulse Amplitude
-    data = 0x24;   // RED LED current
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0C,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-
-    data = 0x24;   // IR LED current
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0D,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-
-    // 6. Clear FIFO pointers
-    data = 0x00;
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x04,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // WR PTR
-
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x05,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // OVF CTR
-
-    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x06,
-                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // RD PTR
-}
+//void MAX30102_Init(void)
+//{
+//    uint8_t data;
+//
+//    // 1. RESET
+//    data = 0x40;
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//    HAL_Delay(100);
+//
+//    // 2. FIFO Configuration
+//    // sample averaging = 4, FIFO rollover enabled, almost full = 17
+//    data = 0x4F;
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x08,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//
+//    // 3. Mode Configuration (SpO2 mode = RED + IR)
+//    data = 0x03;
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//
+//    // 4. SpO2 Configuration
+//    // ADC range = 4096nA, sample rate = 100Hz, pulse width = 411us (18-bit)
+//    data = 0x27;
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0A,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//
+//    // 5. LED Pulse Amplitude
+//    data = 0x24;   // RED LED current
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0C,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//
+//    data = 0x24;   // IR LED current
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0D,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
+//
+//    // 6. Clear FIFO pointers
+//    data = 0x00;
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x04,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // WR PTR
+//
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x05,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // OVF CTR
+//
+//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x06,
+//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // RD PTR
+//}
 
 
 void MAX30102_Read_FIFO_DMA(void)
@@ -355,7 +361,6 @@ int main(void)
 {
 
   /* USER CODE BEGIN 1 */
-
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
@@ -366,6 +371,7 @@ int main(void)
   MX_APPE_Config();
 
   /* USER CODE BEGIN Init */
+
 
   /* USER CODE END Init */
 
@@ -393,7 +399,8 @@ int main(void)
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
 
-  MAX30102_Init();
+
+  MAX30102_Init(&hi2c1);
   BusyDelay(3000);
 
 
@@ -417,13 +424,18 @@ int main(void)
 
 
 	  //MAX30102
-	  MAX30102_Process();
-
-	      if (usb_ready)
+	  if (MAX30102_ReadSample(&sample) == MAX30102_OK)
+	  {
+	      if (MAX30102_FingerPresent(&sample))
 	      {
-	          if (CDC_Transmit_FS((uint8_t*)usb_buffer, strlen(usb_buffer)) == USBD_OK)
-	              usb_ready = 0;
+	          snprintf(usb_buffer, sizeof(usb_buffer),
+	                   "RED: %lu  IR: %lu\r\n",
+	                   sample.red, sample.ir);
+	          CDC_Transmit_FS((uint8_t*)usb_buffer,
+	                          strlen(usb_buffer));
 	      }
+	  }
+	  HAL_Delay(100);
 
 
 	     // MAX17048
