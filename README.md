@@ -14,7 +14,7 @@
 </p><br>
 
 <p align="center">
-<img width="425" height="650" alt="image" src="https://github.com/user-attachments/assets/0460e37d-5202-44a9-bb4c-48237e18aa57" />
+<img width="700"  alt="image" src="https://github.com/user-attachments/assets/8493ff5e-c1e9-4acb-ad1d-4e6853357a85" />
 
 <br>
   <em>Fig. 2: Routing Layout of 4-Layer PCB </em>
@@ -23,7 +23,7 @@
 
 
 <p align="center">
-<img width="900" alt="image" src="https://github.com/user-attachments/assets/474660ea-31f1-4d3b-8686-4fb826d8f704" />
+<img width="1512" alt="image" src="https://github.com/user-attachments/assets/474660ea-31f1-4d3b-8686-4fb826d8f704" />
 
 <br>
   <em>Fig. 3: 3D Model of PCB </em>
