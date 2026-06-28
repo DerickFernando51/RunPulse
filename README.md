@@ -7,9 +7,8 @@
 <br>
 
 <p align="center">
-<img width="1512"  alt="image" src="https://github.com/user-attachments/assets/19afcf28-eb4b-4bf0-8ece-3d6c0b232ed9" />
-
-
+<img width="1512"  alt="image" src="https://github.com/user-attachments/assets/ff90732a-e3e3-4689-9a72-45c230975a61" />
+ 
 <br>
   <em>Fig. 1: Circuit Diagram</em>
 </p><br>
@@ -24,8 +23,7 @@
 
 
 <p align="center">
-<img width="1512" height="750" alt="image" src="https://github.com/user-attachments/assets/9e5aac18-9d9b-49fd-bc46-67daa3d8e966" />
-
+<img width="900" alt="image" src="https://github.com/user-attachments/assets/474660ea-31f1-4d3b-8686-4fb826d8f704" />
 
 <br>
   <em>Fig. 3: 3D Model of PCB </em>
