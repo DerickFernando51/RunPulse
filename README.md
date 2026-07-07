@@ -51,7 +51,7 @@
 <img width="1512"   alt="image" src="https://github.com/user-attachments/assets/64682052-c9fe-4347-b2cf-73a707ce0cf4" />
 
 <br>
-  <em>Fig. 6: Assembled wearable device and device worn on wrist </em>
+  <em>Fig. 6: Assembled wearable device and device on wrist </em>
 </p><br>
 
 
