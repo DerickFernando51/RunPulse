@@ -14,7 +14,7 @@
 </p><br>
 
 <p align="center">
-<img width="700"  alt="image" src="https://github.com/user-attachments/assets/8493ff5e-c1e9-4acb-ad1d-4e6853357a85" />
+<img width="500"  alt="image" src="https://github.com/user-attachments/assets/8493ff5e-c1e9-4acb-ad1d-4e6853357a85" />
 
 <br>
   <em>Fig. 2: Routing Layout of 4-Layer PCB </em>
@@ -34,7 +34,7 @@
 
 
 <br>
-  <em>Fig. 4: Wearable Enclosure </em>
+  <em>Fig. 4: CAD Model of Wearable Enclosure </em>
 </p><br>
 
 
@@ -51,7 +51,7 @@
 <img width="1512"   alt="image" src="https://github.com/user-attachments/assets/64682052-c9fe-4347-b2cf-73a707ce0cf4" />
 
 <br>
-  <em>Fig. 6: Assembled wearable device and device worn on the wrist </em>
+  <em>Fig. 6: Assembled wearable device and device worn on wrist </em>
 </p><br>
 
 
