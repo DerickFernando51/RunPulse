@@ -46,12 +46,21 @@
 </p><br>
 
 
+
 <p align="center">
-<img width="500" height="500" alt="image" src="https://github.com/user-attachments/assets/0abab08e-0662-4042-9c19-15566eed16a5" />
+<img width="1512"   alt="image" src="https://github.com/user-attachments/assets/64682052-c9fe-4347-b2cf-73a707ce0cf4" />
 
 <br>
-  <em>Fig. 6: MCU peripheral assignments </em>
+  <em>Fig. 6: Assembled wearable device and device worn on the wrist </em>
 </p><br>
+
+
+
+
+ 
+
+
+ 
 
  
 
