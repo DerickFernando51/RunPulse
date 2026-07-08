@@ -39,7 +39,7 @@
 
 
 <p align="center">
-<img width="1154" height="704" alt="image" src="https://github.com/user-attachments/assets/f4a51556-c26d-4e95-a3d3-1926f4c15f93" />
+<img width="1154" height="704" alt="image" src="https://github.com/user-attachments/assets/f51fa6ad-33fb-40ea-805b-43dacbb5e69f" />
 
 <br>
   <em>Fig. 5: Top and Bottom Views of  PCB </em>
