@@ -1,7 +1,15 @@
 # Run Pulse
 (STM32WB55, MAX30102, KX126 IMU, I²C, SPI, DMA, BLE)
 
-- Wrist worn wearable that records heart rate and running cadence
+
+- 4-layer PCB integrating sensors, BLE antenna, power management circuitry, and test pads for power rails and SPI/I²C interfaces. <br><br>
+
+- Captures heart rate/SpO₂, cadence and battery percentage using the MAX30102, KX126 and MAX17048G+T10 respectively. <br><br>
+
+- Powered by a 120 mAh Li-Po battery with USB-C charging and an LED for indicating charging and fully charged states. <br><br>
+
+- 3D-printed enclosure is designed to hold the PCB and battery, with a wrist strap for secure attachment.
+
 
 <br>
 <br>
