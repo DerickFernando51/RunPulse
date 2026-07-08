@@ -28,6 +28,7 @@
 #include "stm32_lpm.h"
 #include "math.h"
 #include "max30102.h"
+#include "kx126.h"
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -104,6 +105,8 @@ char *data = "Hello DERA1\r\n";
 
 #define MAX30102_ADDR (0x57 << 1)
 #define MAX17048_ADDR (0x36 << 1)
+
+
 
 
 uint8_t fifo_data[6];
@@ -337,6 +340,9 @@ void I2C_Check_MAX17048(void)
 }
 
 
+
+
+
 static void BusyDelay(uint32_t ms)
 {
     uint32_t start = HAL_GetTick();
@@ -401,6 +407,11 @@ int main(void)
 
 
   MAX30102_Init(&hi2c1);
+
+  KX126_Init();
+  uint8_t id;
+  id = KX126_ReadReg(KX126_WHO_AM_I);
+
   BusyDelay(3000);
 
 
@@ -438,6 +449,32 @@ int main(void)
 	  HAL_Delay(100);
 
 
+	  //KX126
+	  static uint32_t last=0;
+
+	  int16_t x,y,z;
+
+
+	  if(HAL_GetTick()-last > 500)
+	  {
+
+	      last=HAL_GetTick();
+
+
+	      KX126_ReadAccel(&x,&y,&z);
+
+
+	      sprintf(usb_buffer,
+	              "X=%d Y=%d Z=%d\r\n",
+	              x,y,z);
+
+
+	      CDC_Transmit_FS((uint8_t*)usb_buffer,
+	                      strlen(usb_buffer));
+
+	  }
+
+
 	     // MAX17048
 	     static uint32_t last_tick = 0;
 	     if (HAL_GetTick() - last_tick > 5000)
@@ -448,7 +485,7 @@ int main(void)
 
 
     /* USER CODE END WHILE */
-    MX_APPE_Process();
+    //MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }
