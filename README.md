@@ -1,6 +1,8 @@
 # Run Pulse
-(STM32WB55, MAX30102, KX126 IMU, I²C, SPI, DMA, BLE)
+(STM32WB55, MAX30102, KX126 IMU, I²C, SPI, DMA, BLE) <br><br>
 
+
+- Wrist worn wearable that records heart rate and running cadence.  <br><br>
 
 - 4-layer PCB integrating sensors, BLE antenna, power management circuitry, and test pads for power rails and SPI/I²C interfaces. <br><br>
 
