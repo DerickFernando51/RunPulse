@@ -20,15 +20,18 @@
 #include "main.h"
 #include "usb_device.h"
 
-
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "usbd_cdc_if.h"
+#include "ble.h"
+#include "app_ble.h"
+#include "custom_stm.h"
 #include "string.h"
 #include "stm32_lpm.h"
 #include "math.h"
 #include "max30102.h"
 #include "kx126.h"
+#include "ppg_algo.h"
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -69,16 +72,9 @@ volatile uint8_t usb_ready = 0;
 char usb_buffer[64];
 
 
-#define BUFFER_SIZE     100
-#define FS              10
 
-uint32_t red_buf[BUFFER_SIZE];
-uint32_t ir_buf[BUFFER_SIZE];
-uint8_t  buf_idx = 0;
-uint8_t  buf_full = 0;
-
-float    hr_result  = 0.0f;
-float    spo2_result = 0.0f;
+#define SAMPLE_PERIOD_MS   100
+#define BLE_PERIOD_MS      50
 
 MAX30102_Sample_t sample;
 
@@ -101,7 +97,6 @@ static void MX_RF_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-char *data = "Hello DERA1\r\n";
 
 #define MAX30102_ADDR (0x57 << 1)
 #define MAX17048_ADDR (0x36 << 1)
@@ -114,184 +109,8 @@ uint32_t red, ir;
 char msg[64];
 
 
-//void MAX30102_Init(void)
-//{
-//    uint8_t data;
-//
-//    // 1. RESET
-//    data = 0x40;
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//    HAL_Delay(100);
-//
-//    // 2. FIFO Configuration
-//    // sample averaging = 4, FIFO rollover enabled, almost full = 17
-//    data = 0x4F;
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x08,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//
-//    // 3. Mode Configuration (SpO2 mode = RED + IR)
-//    data = 0x03;
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x09,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//
-//    // 4. SpO2 Configuration
-//    // ADC range = 4096nA, sample rate = 100Hz, pulse width = 411us (18-bit)
-//    data = 0x27;
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0A,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//
-//    // 5. LED Pulse Amplitude
-//    data = 0x24;   // RED LED current
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0C,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//
-//    data = 0x24;   // IR LED current
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x0D,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100);
-//
-//    // 6. Clear FIFO pointers
-//    data = 0x00;
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x04,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // WR PTR
-//
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x05,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // OVF CTR
-//
-//    HAL_I2C_Mem_Write(&hi2c1, MAX30102_ADDR, 0x06,
-//                      I2C_MEMADD_SIZE_8BIT, &data, 1, 100); // RD PTR
-//}
 
 
-void MAX30102_Read_FIFO_DMA(void)
-{
-    if (i2c_busy) return;
-
-    i2c_done = 0;
-    i2c_busy = 1;
-
-    HAL_I2C_Mem_Read_DMA(&hi2c1,
-                         MAX30102_ADDR,
-                         0x07,
-                         I2C_MEMADD_SIZE_8BIT,
-                         fifo_data,
-                         6);
-}
-
-//DC removal for HR and spo2
-static float mean_u32(uint32_t *buf, int n)
-{
-    uint64_t sum = 0;
-    for (int i = 0; i < n; i++) sum += buf[i];
-    return (float)sum / n;
-}
-
-//HR calculation using peak detection
-static float calc_hr(uint32_t *buf, int n, int fs)
-{
-    float dc = mean_u32(buf, n);
-
-    // Find peaks in IR signal
-    int   peak_count = 0;
-    float prev = (float)buf[0] - dc;
-    float curr, next;
-
-    for (int i = 1; i < n - 1; i++)
-    {
-        curr = (float)buf[i]   - dc;
-        next = (float)buf[i+1] - dc;
-
-        // Simple peak: rising then falling, above a noise threshold
-        if (curr > prev && curr > next && curr > 200.0f)
-            peak_count++;
-
-        prev = curr;
-    }
-
-    // HR = peaks / time_seconds * 60
-    float time_s = (float)n / fs;
-    return (peak_count / time_s) * 60.0f;
-}
-
-// SpO2 calculation from R ratio
-static float calc_spo2(uint32_t *red_b, uint32_t *ir_b, int n)
-{
-    float dc_red = mean_u32(red_b, n);
-    float dc_ir  = mean_u32(ir_b,  n);
-
-    // AC = RMS of AC component
-    float ac_red_sq = 0, ac_ir_sq = 0;
-    for (int i = 0; i < n; i++)
-    {
-        float r = (float)red_b[i] - dc_red;
-        float ir = (float)ir_b[i] - dc_ir;
-        ac_red_sq += r  * r;
-        ac_ir_sq  += ir * ir;
-    }
-    float ac_red = sqrtf(ac_red_sq / n);
-    float ac_ir  = sqrtf(ac_ir_sq  / n);
-
-    if (dc_red < 1.0f || dc_ir < 1.0f || ac_ir < 1.0f)
-        return -1.0f;  // invalid
-
-    float R = (ac_red / dc_red) / (ac_ir / dc_ir);
-
-    // Empirical calibration
-    float spo2 = 110.0f - 25.0f * R;
-
-    if (spo2 > 100.0f) spo2 = 100.0f;
-    if (spo2 <  80.0f) spo2 = -1.0f;  // out of range, finger not on sensor
-
-    return spo2;
-}
-
-
-void MAX30102_Process(void)
-{
-    static uint32_t last_sample = 0;
-    static uint8_t samples_since_calc = 0;
-
-    // Trigger DMA read every 100ms
-    if (!i2c_busy && (HAL_GetTick() - last_sample >= 100))
-    {
-        last_sample = HAL_GetTick();
-        MAX30102_Read_FIFO_DMA();
-    }
-
-    // When DMA read completes
-    if (i2c_done)
-    {
-        i2c_done = 0;
-
-        // Parse raw values
-        red = ((uint32_t)(fifo_data[0] & 0x03) << 16) |
-              ((uint32_t)fifo_data[1] << 8) | fifo_data[2];
-        ir  = ((uint32_t)(fifo_data[3] & 0x03) << 16) |
-              ((uint32_t)fifo_data[4] << 8) | fifo_data[5];
-
-        // Finger detection
-        if (ir < 50000)
-            return;  // no finger, skip
-
-        // Store into ring buffer
-        red_buf[buf_idx % BUFFER_SIZE] = red;
-        ir_buf[buf_idx % BUFFER_SIZE]  = ir;
-        buf_idx++;
-        samples_since_calc++;
-
-        // Calculate once buffer is primed, every 10 new samples (1s)
-        if (buf_idx >= BUFFER_SIZE && samples_since_calc >= 10)
-        {
-            samples_since_calc = 0;
-            hr_result   = calc_hr(ir_buf, BUFFER_SIZE, FS);
-            spo2_result = calc_spo2(red_buf, ir_buf, BUFFER_SIZE);
-
-            snprintf(usb_buffer, sizeof(usb_buffer),
-                     "HR: %.1f bpm  SpO2: %.1f%%\r\n", hr_result, spo2_result);
-            usb_ready = 1;
-        }
-    }
-}
 
 
 void MAX17048_Read_VCELL(void)
@@ -307,20 +126,27 @@ void MAX17048_Read_VCELL(void)
                          100) == HAL_OK)
     {
         uint16_t raw = (data[0] << 8) | data[1];
+
         raw >>= 4;
 
         uint32_t voltage_mV = (raw * 125) / 100;
 
-        snprintf(usb_buffer, sizeof(usb_buffer),
+        snprintf(usb_buffer,
+                 sizeof(usb_buffer),
                  "VCELL: %lu.%03lu V\r\n",
-                 voltage_mV / 1000, voltage_mV % 1000);
+                 voltage_mV / 1000,
+                 voltage_mV % 1000);
     }
     else
     {
-        snprintf(usb_buffer, sizeof(usb_buffer), "VCELL READ FAIL\r\n");
+        snprintf(usb_buffer,
+                 sizeof(usb_buffer),
+                 "VCELL READ FAIL\r\n");
     }
 
-    usb_ready = 1;
+
+    CDC_Transmit_FS((uint8_t*)usb_buffer,
+                    strlen(usb_buffer));
 }
 
 void I2C_Check_MAX17048(void)
@@ -407,8 +233,9 @@ int main(void)
 
 
   MAX30102_Init(&hi2c1);
-
   KX126_Init();
+  PPG_Init();
+
   uint8_t id;
   id = KX126_ReadReg(KX126_WHO_AM_I);
 
@@ -424,68 +251,96 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
-	  //USB CDC Test
-//	  static uint32_t last_print = 0;
-//	  	       if (USB_IsConnected() && (HAL_GetTick() - last_print >= 1000))
-//	  	       {
-//	  	           last_print = HAL_GetTick();
-//	  	           CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
-//	  	       }
+	  static uint32_t last_sample = 0;
+	  static uint32_t last_ble    = 0;
+	  static uint8_t was_finger_present = 0;
 
 
-	  //MAX30102
-	  if (MAX30102_ReadSample(&sample) == MAX30102_OK)
-	  {
-	      if (MAX30102_FingerPresent(&sample))
+	  if (MAX30102_GetDmaState() == MAX30102_IDLE &&
+	          (HAL_GetTick() - last_sample >= SAMPLE_PERIOD_MS))
 	      {
-	          snprintf(usb_buffer, sizeof(usb_buffer),
-	                   "RED: %lu  IR: %lu\r\n",
-	                   sample.red, sample.ir);
-	          CDC_Transmit_FS((uint8_t*)usb_buffer,
-	                          strlen(usb_buffer));
+	          last_sample = HAL_GetTick();
+	          MAX30102_StartReadDMA();
 	      }
-	  }
-	  HAL_Delay(100);
+
+
+	      if (MAX30102_GetDmaState() == MAX30102_DATA_READY)
+	      {
+	          MAX30102_GetLastSample(&sample);
+
+	          if (MAX30102_FingerPresent(&sample))
+	          {
+	              was_finger_present = 1;
+	              PPG_PushSample(sample.red, sample.ir);
+
+	              PPG_Result_t result = PPG_GetLastResult();
+	              if (result.valid)
+	              {
+	                  uint8_t bleData[4];
+	                  bleData[0] = result.heart_rate & 0xFF;
+	                  bleData[1] = (result.heart_rate >> 8) & 0xFF;
+	                  bleData[2] = result.spo2;
+	                  bleData[3] = result.signal_quality;
+
+	                  if ((HAL_GetTick() - last_ble >= BLE_PERIOD_MS) &&
+	                      (APP_BLE_Get_Server_Connection_Status() == APP_BLE_CONNECTED_SERVER))
+	                  {
+	                      last_ble = HAL_GetTick();
+	                      Custom_STM_App_Update_Char(CUSTOM_STM_HR, bleData);
+	                  }
+	              }
+
+	          }
+	          else
+	          {
+
+	              if (was_finger_present) {
+	                  PPG_Init();
+	                  was_finger_present = 0;
+	              }
+
+	          }
+	      }
+
 
 
 	  //KX126
-	  static uint32_t last=0;
-
-	  int16_t x,y,z;
-
-
-	  if(HAL_GetTick()-last > 500)
-	  {
-
-	      last=HAL_GetTick();
-
-
-	      KX126_ReadAccel(&x,&y,&z);
-
-
-	      sprintf(usb_buffer,
-	              "X=%d Y=%d Z=%d\r\n",
-	              x,y,z);
-
-
-	      CDC_Transmit_FS((uint8_t*)usb_buffer,
-	                      strlen(usb_buffer));
-
-	  }
+//	  static uint32_t last=0;
+//
+//	  int16_t x,y,z;
+//
+//
+//	  if(HAL_GetTick()-last > 500)
+//	  {
+//
+//	      last=HAL_GetTick();
+//
+//
+//	      KX126_ReadAccel(&x,&y,&z);
+//
+//
+//	      sprintf(usb_buffer,
+//	              "X=%d Y=%d Z=%d\r\n",
+//	              x,y,z);
+//
+//
+//	      CDC_Transmit_FS((uint8_t*)usb_buffer,
+//	                      strlen(usb_buffer));
+//
+//	  }
 
 
 	     // MAX17048
-	     static uint32_t last_tick = 0;
-	     if (HAL_GetTick() - last_tick > 5000)
-	     {
-	         last_tick = HAL_GetTick();
-	         MAX17048_Read_VCELL();
-	     }
+//	     static uint32_t last_tick = 0;
+//	     if (HAL_GetTick() - last_tick > 1000)
+//	     {
+//	         last_tick = HAL_GetTick();
+//	         MAX17048_Read_VCELL();
+//	     }
 
 
     /* USER CODE END WHILE */
-    //MX_APPE_Process();
+    MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -565,7 +420,6 @@ void SystemClock_Config(void)
 void PeriphCommonClock_Config(void)
 {
   RCC_PeriphCLKInitTypeDef PeriphClkInitStruct = {0};
-  LL_HSEM_1StepLock( HSEM, 5 );
 
   /** Initializes the peripherals clock
   */
@@ -874,11 +728,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-    if (hi2c->Instance == I2C1)
-    {
-        i2c_done = 1;
-        i2c_busy = 0;
-    }
+	MAX30102_I2C_RxCpltCallback(hi2c);
 }
 
 

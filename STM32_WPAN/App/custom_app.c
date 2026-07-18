@@ -35,7 +35,8 @@
 /* Private typedef -----------------------------------------------------------*/
 typedef struct
 {
-  /* rpService */
+  /* runningMetricsService */
+  uint8_t               Hr_Notification_Status;
   /* USER CODE BEGIN CUSTOM_APP_Context_t */
 
   /* USER CODE END CUSTOM_APP_Context_t */
@@ -76,7 +77,9 @@ uint16_t Connection_Handle;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
-/* rpService */
+/* runningMetricsService */
+static void Custom_Hr_Update_Char(void);
+static void Custom_Hr_Send_Notification(void);
 
 /* USER CODE BEGIN PFP */
 
@@ -94,11 +97,23 @@ void Custom_STM_App_Notification(Custom_STM_App_Notification_evt_t *pNotificatio
 
     /* USER CODE END CUSTOM_STM_App_Notification_Custom_Evt_Opcode */
 
-    /* rpService */
-    case CUSTOM_STM_CHARWRITE_WRITE_EVT:
-      /* USER CODE BEGIN CUSTOM_STM_CHARWRITE_WRITE_EVT */
+    /* runningMetricsService */
+    case CUSTOM_STM_HR_READ_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_HR_READ_EVT */
 
-      /* USER CODE END CUSTOM_STM_CHARWRITE_WRITE_EVT */
+      /* USER CODE END CUSTOM_STM_HR_READ_EVT */
+      break;
+
+    case CUSTOM_STM_HR_NOTIFY_ENABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_HR_NOTIFY_ENABLED_EVT */
+
+      /* USER CODE END CUSTOM_STM_HR_NOTIFY_ENABLED_EVT */
+      break;
+
+    case CUSTOM_STM_HR_NOTIFY_DISABLED_EVT:
+      /* USER CODE BEGIN CUSTOM_STM_HR_NOTIFY_DISABLED_EVT */
+
+      /* USER CODE END CUSTOM_STM_HR_NOTIFY_DISABLED_EVT */
       break;
 
     case CUSTOM_STM_NOTIFICATION_COMPLETE_EVT:
@@ -174,7 +189,45 @@ void Custom_APP_Init(void)
  *
  *************************************************************/
 
-/* rpService */
+/* runningMetricsService */
+__USED void Custom_Hr_Update_Char(void) /* Property Read */
+{
+  uint8_t updateflag = 0;
+
+  /* USER CODE BEGIN Hr_UC_1*/
+
+  /* USER CODE END Hr_UC_1*/
+
+  if (updateflag != 0)
+  {
+    Custom_STM_App_Update_Char(CUSTOM_STM_HR, (uint8_t *)UpdateCharData);
+  }
+
+  /* USER CODE BEGIN Hr_UC_Last*/
+
+  /* USER CODE END Hr_UC_Last*/
+  return;
+}
+
+void Custom_Hr_Send_Notification(void) /* Property Notification */
+{
+  uint8_t updateflag = 0;
+
+  /* USER CODE BEGIN Hr_NS_1*/
+
+  /* USER CODE END Hr_NS_1*/
+
+  if (updateflag != 0)
+  {
+    Custom_STM_App_Update_Char(CUSTOM_STM_HR, (uint8_t *)NotifyCharData);
+  }
+
+  /* USER CODE BEGIN Hr_NS_Last*/
+
+  /* USER CODE END Hr_NS_Last*/
+
+  return;
+}
 
 /* USER CODE BEGIN FD_LOCAL_FUNCTIONS*/
 
