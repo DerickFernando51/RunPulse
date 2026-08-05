@@ -2,14 +2,18 @@
 #include <string.h>
 #include <math.h>
 
-#define PPG_BUF_LEN       100     // 10s window at 10Hz effective sample rate
-#define SAMPLE_RATE_HZ    10.0f   // must match main.c's SAMPLE_PERIOD_MS (100ms)
-#define MIN_HR_BPM        40.0f
-#define MAX_HR_BPM        180.0f
-#define PEAK_MIN_FRACTION 0.15f   // peak must exceed this fraction of AC RMS to count
-#define MAX_PEAKS         30      // generous upper bound for peaks per window
-#define HR_EMA_ALPHA      0.3f    // smoothing factor: lower = smoother/slower to react
-#define SPO2_EMA_ALPHA    0.3f
+#define PPG_BUF_LEN          70     // 7s window at 10Hz — faster response than 10s
+#define SAMPLE_RATE_HZ       10.0f  // must match main.c's SAMPLE_PERIOD_MS (100ms)
+#define MIN_HR_BPM           40.0f
+#define MAX_HR_BPM           180.0f
+#define PEAK_MIN_FRACTION    0.15f  // peak must exceed this fraction of AC RMS to count
+#define MAX_PEAKS            30     // generous upper bound for peaks per window
+
+#define HR_EMA_ALPHA_NORMAL  0.3f   // normal smoothing for small fluctuations
+#define HR_EMA_ALPHA_FAST    0.8f   // fast-track weight for large, real jumps
+#define HR_CHANGE_THRESHOLD  15.0f  // BPM delta that triggers fast-track response
+
+#define SPO2_EMA_ALPHA       0.3f
 
 static uint32_t red_buf[PPG_BUF_LEN];
 static uint32_t ir_buf[PPG_BUF_LEN];
@@ -27,28 +31,46 @@ static float PPG_MeanU32(uint32_t *buf, uint16_t len)
     return (float)sum / (float)len;
 }
 
-static float PPG_AcRms(uint32_t *buf, uint16_t len, float dc)
+// Simple 3-sample moving average — smooths high-frequency noise/motion
+// artifact before AC/DC calculations.
+static void PPG_Smooth(uint32_t *in, float *out, uint16_t len)
+{
+    out[0] = (float)in[0];
+    out[len-1] = (float)in[len-1];
+    for (uint16_t i = 1; i < len - 1; i++) {
+        out[i] = ((float)in[i-1] + (float)in[i] + (float)in[i+1]) / 3.0f;
+    }
+}
+
+static float PPG_MeanFloat(float *buf, uint16_t len)
+{
+    float sum = 0.0f;
+    for (uint16_t i = 0; i < len; i++) sum += buf[i];
+    return sum / (float)len;
+}
+
+static float PPG_AcRmsFloat(float *buf, uint16_t len, float dc)
 {
     float sum_sq = 0.0f;
     for (uint16_t i = 0; i < len; i++) {
-        float ac = (float)buf[i] - dc;
+        float ac = buf[i] - dc;
         sum_sq += ac * ac;
     }
     return sqrtf(sum_sq / (float)len);
 }
 
 // Amplitude-thresholded peak detection + inter-peak-interval timing.
-static float PPG_EstimateHR(uint32_t *ir, uint16_t len, float dc, float ac_rms)
+static float PPG_EstimateHR(float *ir_smooth, uint16_t len, float dc, float ac_rms)
 {
     float threshold = ac_rms * PEAK_MIN_FRACTION;
 
     int32_t peak_indices[MAX_PEAKS];
     uint16_t peak_count = 0;
 
-    float prev = (float)ir[0] - dc;
+    float prev = ir_smooth[0] - dc;
     for (uint16_t i = 1; i < len - 1; i++) {
-        float curr = (float)ir[i]   - dc;
-        float next = (float)ir[i+1] - dc;
+        float curr = ir_smooth[i]   - dc;
+        float next = ir_smooth[i+1] - dc;
 
         if (curr > prev && curr > next && curr > threshold) {
             if (peak_count < MAX_PEAKS) {
@@ -78,13 +100,18 @@ static float PPG_EstimateHR(uint32_t *ir, uint16_t len, float dc, float ac_rms)
 static void PPG_Compute(uint32_t *red, uint32_t *ir, uint16_t len,
                          float *hr_out, float *spo2_out)
 {
-    float red_dc = PPG_MeanU32(red, len);
-    float ir_dc  = PPG_MeanU32(ir, len);
+    static float red_smooth[PPG_BUF_LEN];
+    static float ir_smooth[PPG_BUF_LEN];
+    PPG_Smooth(red, red_smooth, len);
+    PPG_Smooth(ir, ir_smooth, len);
 
-    float red_ac_rms = PPG_AcRms(red, len, red_dc);
-    float ir_ac_rms  = PPG_AcRms(ir, len, ir_dc);
+    float red_dc = PPG_MeanFloat(red_smooth, len);
+    float ir_dc  = PPG_MeanFloat(ir_smooth, len);
 
-    *hr_out = PPG_EstimateHR(ir, len, ir_dc, ir_ac_rms);
+    float red_ac_rms = PPG_AcRmsFloat(red_smooth, len, red_dc);
+    float ir_ac_rms  = PPG_AcRmsFloat(ir_smooth, len, ir_dc);
+
+    *hr_out = PPG_EstimateHR(ir_smooth, len, ir_dc, ir_ac_rms);
 
     if (red_dc <= 0.0f || ir_dc <= 0.0f || ir_ac_rms <= 0.0f) {
         *spo2_out = 0.0f;
@@ -120,9 +147,15 @@ void PPG_PushSample(uint32_t red_val, uint32_t ir_val)
 
         if (hr > 0.0f && spo2 > 0.0f)
         {
-            // Smooth across windows so one noisy window doesn't jump wildly
-            if (hr_ema == 0.0f)   hr_ema   = hr;
-            else                  hr_ema   = HR_EMA_ALPHA   * hr   + (1.0f - HR_EMA_ALPHA)   * hr_ema;
+            // HR: adaptive smoothing — fast-track large real jumps,
+            // damp small fluctuations as before
+            if (hr_ema == 0.0f) {
+                hr_ema = hr;
+            } else {
+                float delta = fabsf(hr - hr_ema);
+                float alpha = (delta > HR_CHANGE_THRESHOLD) ? HR_EMA_ALPHA_FAST : HR_EMA_ALPHA_NORMAL;
+                hr_ema = alpha * hr + (1.0f - alpha) * hr_ema;
+            }
 
             if (spo2_ema == 0.0f) spo2_ema = spo2;
             else                  spo2_ema = SPO2_EMA_ALPHA * spo2 + (1.0f - SPO2_EMA_ALPHA) * spo2_ema;
@@ -134,13 +167,16 @@ void PPG_PushSample(uint32_t red_val, uint32_t ir_val)
         }
         else
         {
-            // This window was rejected (no peaks / out of range) — don't
-            // update the smoothed value, just mark quality as low.
+            last_result.heart_rate     = 0;
+            last_result.spo2           = 0;
             last_result.signal_quality = 0;
-            last_result.valid          = (hr_ema > 0.0f) ? 1 : 0;  // keep last good value visible if we have one
+            last_result.valid          = 0;
+
+            hr_ema   = 0.0f;
+            spo2_ema = 0.0f;
         }
 
-        buf_idx = 0;  // reset for next fresh, non-overlapping window
+        buf_idx = 0;
     }
 }
 

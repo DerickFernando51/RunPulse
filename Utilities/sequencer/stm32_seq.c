@@ -683,4 +683,3 @@ uint8_t SEQ_BitPosition(uint32_t Value)
 /**
   * @}
   */
-

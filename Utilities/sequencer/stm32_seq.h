@@ -402,4 +402,3 @@ void UTIL_SEQ_CatchWarning(UTIL_SEQ_WARNING WarningId);
 #endif
 
 #endif /*__STM32_SEQ_H */
-

@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "cmsis_os.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -65,6 +66,13 @@ RTC_HandleTypeDef hrtc;
 
 SPI_HandleTypeDef hspi1;
 
+/* Definitions for defaultTask */
+osThreadId_t defaultTaskHandle;
+const osThreadAttr_t defaultTask_attributes = {
+  .name = "defaultTask",
+  .priority = (osPriority_t) osPriorityNormal,
+  .stack_size = 128 * 4
+};
 /* USER CODE BEGIN PV */
 volatile uint8_t i2c_done = 0;
 volatile uint8_t i2c_busy = 0;
@@ -91,6 +99,8 @@ static void MX_SPI1_Init(void);
 static void MX_IPCC_Init(void);
 static void MX_RTC_Init(void);
 static void MX_RF_Init(void);
+void StartDefaultTask(void *argument);
+
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -226,7 +236,6 @@ int main(void)
   MX_I2C1_Init();
   MX_I2C3_Init();
   MX_SPI1_Init();
-  MX_USB_Device_Init();
   MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
@@ -244,63 +253,104 @@ int main(void)
 
   /* USER CODE END 2 */
 
+  /* Init scheduler */
+  osKernelInitialize();
+
+  /* USER CODE BEGIN RTOS_MUTEX */
+  /* add mutexes, ... */
+  /* USER CODE END RTOS_MUTEX */
+
+  /* USER CODE BEGIN RTOS_SEMAPHORES */
+  /* add semaphores, ... */
+  /* USER CODE END RTOS_SEMAPHORES */
+
+  /* USER CODE BEGIN RTOS_TIMERS */
+  /* start timers, add new ones, ... */
+  /* USER CODE END RTOS_TIMERS */
+
+  /* USER CODE BEGIN RTOS_QUEUES */
+  /* add queues, ... */
+  /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* creation of defaultTask */
+  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
+  /* USER CODE BEGIN RTOS_EVENTS */
+  /* add events, ... */
+  /* USER CODE END RTOS_EVENTS */
+
   /* Init code for STM32_WPAN */
   MX_APPE_Init();
+
+  /* Start scheduler */
+  osKernelStart();
+
+  /* We should never get here as control is now taken by the scheduler */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  static uint32_t last_sample = 0;
-	  static uint32_t last_ble    = 0;
-	  static uint8_t was_finger_present = 0;
-
-
-	  if (MAX30102_GetDmaState() == MAX30102_IDLE &&
-	          (HAL_GetTick() - last_sample >= SAMPLE_PERIOD_MS))
-	      {
-	          last_sample = HAL_GetTick();
-	          MAX30102_StartReadDMA();
-	      }
-
-
-	      if (MAX30102_GetDmaState() == MAX30102_DATA_READY)
-	      {
-	          MAX30102_GetLastSample(&sample);
-
-	          if (MAX30102_FingerPresent(&sample))
-	          {
-	              was_finger_present = 1;
-	              PPG_PushSample(sample.red, sample.ir);
-
-	              PPG_Result_t result = PPG_GetLastResult();
-	              if (result.valid)
-	              {
-	                  uint8_t bleData[4];
-	                  bleData[0] = result.heart_rate & 0xFF;
-	                  bleData[1] = (result.heart_rate >> 8) & 0xFF;
-	                  bleData[2] = result.spo2;
-	                  bleData[3] = result.signal_quality;
-
-	                  if ((HAL_GetTick() - last_ble >= BLE_PERIOD_MS) &&
-	                      (APP_BLE_Get_Server_Connection_Status() == APP_BLE_CONNECTED_SERVER))
-	                  {
-	                      last_ble = HAL_GetTick();
-	                      Custom_STM_App_Update_Char(CUSTOM_STM_HR, bleData);
-	                  }
-	              }
-
-	          }
-	          else
-	          {
-
-	              if (was_finger_present) {
-	                  PPG_Init();
-	                  was_finger_present = 0;
-	              }
-
-	          }
-	      }
+//	  static uint32_t last_sample = 0;
+//	  static uint32_t last_ble    = 0;
+//	  static uint8_t  was_finger_present = 0;
+//
+//
+//	  if (MAX30102_GetDmaState() == MAX30102_IDLE &&
+//	          (HAL_GetTick() - last_sample >= SAMPLE_PERIOD_MS))
+//	      {
+//	          last_sample = HAL_GetTick();
+//	          MAX30102_StartReadDMA();
+//	      }
+//
+//
+//	      if (MAX30102_GetDmaState() == MAX30102_DATA_READY)
+//	      {
+//	          MAX30102_GetLastSample(&sample);
+//
+//	          if (MAX30102_FingerPresent(&sample))
+//	          	          {
+//	          	              was_finger_present = 1;
+//	          	              PPG_PushSample(sample.red, sample.ir);
+//
+//	          	              PPG_Result_t result = PPG_GetLastResult();
+//
+//	          	              uint8_t bleData[5];
+//	          	              bleData[0] = result.heart_rate & 0xFF;
+//	          	              bleData[1] = (result.heart_rate >> 8) & 0xFF;
+//	          	              bleData[2] = result.spo2;
+//	          	              bleData[3] = result.signal_quality;
+//	          	              bleData[4] = result.valid;
+//
+//	          	              if ((HAL_GetTick() - last_ble >= BLE_PERIOD_MS) &&
+//	          	                  (APP_BLE_Get_Server_Connection_Status() == APP_BLE_CONNECTED_SERVER))
+//	          	              {
+//	          	                  last_ble = HAL_GetTick();
+//	          	                  Custom_STM_App_Update_Char(CUSTOM_STM_HR, bleData);
+//	          	              }
+//	          	          }
+//	          	          else
+//	          	          {
+//	          	              if (was_finger_present) {
+//	          	                  PPG_Init();
+//	          	                  was_finger_present = 0;
+//	          	              }
+//
+//	          	              uint8_t bleData[5] = {0, 0, 0, 0, 0};  // explicit "no finger" packet
+//
+//	          	              if ((HAL_GetTick() - last_ble >= BLE_PERIOD_MS) &&
+//	          	                  (APP_BLE_Get_Server_Connection_Status() == APP_BLE_CONNECTED_SERVER))
+//	          	              {
+//	          	                  last_ble = HAL_GetTick();
+//	          	                  Custom_STM_App_Update_Char(CUSTOM_STM_HR, bleData);
+//	          	              }
+//	          	          }
+//	      }
 
 
 
@@ -340,7 +390,6 @@ int main(void)
 
 
     /* USER CODE END WHILE */
-    MX_APPE_Process();
 
     /* USER CODE BEGIN 3 */
   }
@@ -613,7 +662,7 @@ static void MX_RTC_Init(void)
 
   /** Enable the WakeUp
   */
-  if (HAL_RTCEx_SetWakeUpTimer(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
+  if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
   {
     Error_Handler();
   }
@@ -733,6 +782,48 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 
 
 /* USER CODE END 4 */
+
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
+void StartDefaultTask(void *argument)
+{
+  /* init code for USB_Device */
+  MX_USB_Device_Init();
+  /* USER CODE BEGIN 5 */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END 5 */
+}
+
+/**
+  * @brief  Period elapsed callback in non blocking mode
+  * @note   This function is called  when TIM16 interrupt took place, inside
+  * HAL_TIM_IRQHandler(). It makes a direct call to HAL_IncTick() to increment
+  * a global variable "uwTick" used as application time base.
+  * @param  htim : TIM handle
+  * @retval None
+  */
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  /* USER CODE BEGIN Callback 0 */
+
+  /* USER CODE END Callback 0 */
+  if (htim->Instance == TIM16)
+  {
+    HAL_IncTick();
+  }
+  /* USER CODE BEGIN Callback 1 */
+
+  /* USER CODE END Callback 1 */
+}
 
 /**
   * @brief  This function is executed in case of error occurrence.

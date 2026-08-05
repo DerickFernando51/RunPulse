@@ -562,4 +562,3 @@ static tBleStatus Generic_STM_App_Update_Char_Ext(uint16_t ConnectionHandle, uin
   }
   return ret;
 }
-
