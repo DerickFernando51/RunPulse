@@ -1,5 +1,6 @@
 #include "tasks.h"
 #include "SensorManager.h"
+#include "sensor_objects.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -16,7 +17,8 @@ extern SensorManager sensors;
 
 void SensorTask(void *argument)
 {
-    vTaskDelay(pdMS_TO_TICKS(3000));
+	Sensors_Init();
+	vTaskDelay(pdMS_TO_TICKS(3000));
 
     char msg[] = "TASK START\r\n";
 
@@ -28,16 +30,24 @@ void SensorTask(void *argument)
        vTaskDelay(pdMS_TO_TICKS(3000));
 
 
-    if(sensors.init())
-    {
-        char msg[]="SENSORS INIT OK\r\n";
+       if(sensors.init())
+       {
+           char msg[]="SENSORS INIT OK\r\n";
 
-        CDC_Transmit_FS(
-            (uint8_t*)msg,
-            strlen(msg)
-        );
-    }
+           CDC_Transmit_FS(
+               (uint8_t*)msg,
+               strlen(msg)
+           );
+       }
+       else
+       {
+           char msg[]="SENSORS INIT FAIL\r\n";
 
+           CDC_Transmit_FS(
+               (uint8_t*)msg,
+               strlen(msg)
+           );
+       }
 
     TickType_t lastWake = xTaskGetTickCount();
 
@@ -45,8 +55,17 @@ void SensorTask(void *argument)
     while(1)
     {
 
-        sensors.sampleFast();
+    	SensorFrame frame = {};
 
+    	if(sensors.sampleFast(frame))
+    	{
+    	    // frame contains:
+    	    // frame.ax
+    	    // frame.ay
+    	    // frame.az
+    	    // frame.ir
+    	    // frame.red
+    	}
 
         vTaskDelayUntil(
             &lastWake,

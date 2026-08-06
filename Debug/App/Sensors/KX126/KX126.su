@@ -1,6 +1,6 @@
-../App/Interfaces/ISensor.h:4:7:constexpr ISensor::ISensor()	16	static
-../App/Interfaces/ISensor.h:7:13:ISensor::~ISensor()	16	static
-../App/Interfaces/ISensor.h:7:13:virtual ISensor::~ISensor()	16	static
+../App/Interfaces/ISensor.h:15:13:ISensor::~ISensor()	16	static
+../App/Interfaces/ISensor.h:15:13:virtual ISensor::~ISensor()	16	static
+../App/Interfaces/ISensor.h:7:7:constexpr ISensor::ISensor()	16	static
 ../App/Interfaces/IIMUSensor.h:15:7:constexpr IIMUSensor::IIMUSensor()	16	static
 ../App/Interfaces/IIMUSensor.h:19:13:IIMUSensor::~IIMUSensor()	16	static
 ../App/Interfaces/IIMUSensor.h:19:13:virtual IIMUSensor::~IIMUSensor()	16	static

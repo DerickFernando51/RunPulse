@@ -5,13 +5,16 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../App/Sensors/MAX30102/MAX30102.cpp 
+../App/Sensors/MAX30102/MAX30102.cpp \
+../App/Sensors/MAX30102/MAX30102_Callback.cpp 
 
 OBJS += \
-./App/Sensors/MAX30102/MAX30102.o 
+./App/Sensors/MAX30102/MAX30102.o \
+./App/Sensors/MAX30102/MAX30102_Callback.o 
 
 CPP_DEPS += \
-./App/Sensors/MAX30102/MAX30102.d 
+./App/Sensors/MAX30102/MAX30102.d \
+./App/Sensors/MAX30102/MAX30102_Callback.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
@@ -21,7 +24,7 @@ App/Sensors/MAX30102/%.o App/Sensors/MAX30102/%.su App/Sensors/MAX30102/%.cyclo:
 clean: clean-App-2f-Sensors-2f-MAX30102
 
 clean-App-2f-Sensors-2f-MAX30102:
-	-$(RM) ./App/Sensors/MAX30102/MAX30102.cyclo ./App/Sensors/MAX30102/MAX30102.d ./App/Sensors/MAX30102/MAX30102.o ./App/Sensors/MAX30102/MAX30102.su
+	-$(RM) ./App/Sensors/MAX30102/MAX30102.cyclo ./App/Sensors/MAX30102/MAX30102.d ./App/Sensors/MAX30102/MAX30102.o ./App/Sensors/MAX30102/MAX30102.su ./App/Sensors/MAX30102/MAX30102_Callback.cyclo ./App/Sensors/MAX30102/MAX30102_Callback.d ./App/Sensors/MAX30102/MAX30102_Callback.o ./App/Sensors/MAX30102/MAX30102_Callback.su
 
 .PHONY: clean-App-2f-Sensors-2f-MAX30102
 

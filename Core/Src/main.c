@@ -32,6 +32,8 @@
 #include "stm32_lpm.h"
 #include "math.h"
 
+#include "MAX30102_Callback.h"
+
 //#include "max30102.h"
 //#include "kx126.h"
 //#include "ppg_algo.h"
@@ -783,11 +785,21 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
+#include "MAX30102_Callback.h"
+
+
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	//MAX30102_I2C_RxCpltCallback(hi2c);
-}
 
+//    CDC_Transmit_FS(
+//        (uint8_t*)"I2C RX CALLBACK\r\n",
+//        19
+//    );
+
+
+    MAX30102_I2C_Callback(hi2c);
+
+}
 
 /* USER CODE END 4 */
 

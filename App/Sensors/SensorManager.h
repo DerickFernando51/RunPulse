@@ -1,15 +1,20 @@
 #ifndef SENSOR_MANAGER_H
 #define SENSOR_MANAGER_H
 
+
+#include "SensorFrame.h"
+
 #include "MAX30102.h"
 #include "KX126.h"
 #include "MAX17048.h"
+
 
 
 class SensorManager
 {
 
 public:
+
 
     SensorManager(
         MAX30102& ppg,
@@ -21,16 +26,26 @@ public:
     bool init();
 
 
-    void sampleFast();
+    bool sampleFast(
+        SensorFrame& frame
+    );
 
-    void sampleBattery();
+
+//    bool sampleBattery(
+//        SensorFrame& frame
+//    );
+
 
 
 private:
 
+
     MAX30102& ppg_;
+
     KX126& imu_;
+
     MAX17048& battery_;
+
 
 };
 

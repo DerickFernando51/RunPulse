@@ -1,6 +1,7 @@
 "./App/Sensors/KX126/KX126.o"
 "./App/Sensors/MAX17048/MAX17048.o"
 "./App/Sensors/MAX30102/MAX30102.o"
+"./App/Sensors/MAX30102/MAX30102_Callback.o"
 "./App/Sensors/SensorManager.o"
 "./App/Sensors/sensor_objects.o"
 "./App/Tasks/BLETask.o"

@@ -26,98 +26,119 @@ battery_(battery)
 bool SensorManager::init()
 {
 
-    return
-        ppg_.init()
-        &&
-        imu_.init()
-        &&
-        battery_.init();
+    if(!ppg_.init())
+    {
+        char msg[]="MAX30102 INIT FAIL\r\n";
+        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        return false;
+    }
 
+    char msg1[]="MAX30102 OK\r\n";
+    CDC_Transmit_FS((uint8_t*)msg1, strlen(msg1));
+
+
+    if(!imu_.init())
+    {
+        char msg[]="KX126 INIT FAIL\r\n";
+        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        return false;
+    }
+
+    char msg2[]="KX126 OK\r\n";
+    CDC_Transmit_FS((uint8_t*)msg2, strlen(msg2));
+
+
+    if(!battery_.init())
+    {
+        char msg[]="MAX17048 INIT FAIL\r\n";
+        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        return false;
+    }
+
+
+    char msg3[]="ALL SENSORS OK\r\n";
+    CDC_Transmit_FS((uint8_t*)msg3, strlen(msg3));
+
+    return true;
 }
 
-void SensorManager::sampleFast()
+
+bool SensorManager::sampleFast(SensorFrame& frame)
 {
     AccelData accel;
 
 
+    // KX126
     if(!imu_.readAcceleration(accel))
     {
-        char msg[]="KX126 READ FAIL\r\n";
+        char msg[] = "KX126 READ FAIL\r\n";
 
         CDC_Transmit_FS(
             (uint8_t*)msg,
             strlen(msg)
         );
 
-        return;
+        return false;
     }
 
 
-    char usbBuf[64];
+    frame.ax = accel.x;
+    frame.ay = accel.y;
+    frame.az = accel.z;
+
+
+
+    // MAX30102 DMA
+
+    if(!ppg_.startReadDMA())
+    {
+        frame.ir = 0;
+        frame.red = 0;
+        return false;
+    }
+
+    PPGData ppg;
+
+    if(ppg_.getSample(ppg))
+    {
+        frame.ir  = ppg.ir;
+        frame.red = ppg.red;
+    }
+    else
+    {
+        frame.ir = 0;
+        frame.red = 0;
+    }
+
+
+    // USB DEBUG OUTPUT
+
+    char usbBuf[128];
 
 
     int len = snprintf(
         usbBuf,
         sizeof(usbBuf),
-        "ACC %.4f %.4f %.4f\r\n",
-        accel.x,
-        accel.y,
-        accel.z
+        "ACC %.3f %.3f %.3f | IR %lu RED %lu\r\n",
+        frame.ax,
+        frame.ay,
+        frame.az,
+        frame.ir,
+        frame.red
     );
+
 
     CDC_Transmit_FS(
         (uint8_t*)usbBuf,
         len
     );
+
+
+    return true;
 }
 
-//void SensorManager::sampleFast()
+
+//bool SensorManager::sampleBattery(SensorFrame& frame)
 //{
-//    static uint32_t printCounter = 0;
-//
-//    AccelData accel;
-//
-//
-//    if(!imu_.readAcceleration(accel))
-//    {
-//        char msg[] = "KX126 READ FAIL\r\n";
-//
-//        CDC_Transmit_FS(
-//            (uint8_t*)msg,
-//            strlen(msg)
-//        );
-//
-//        return;
-//    }
-//
-//
-//    printCounter++;
-//
-//
-//    if(printCounter >= 50)
-//    {
-//        printCounter = 0;
-//
-//
-//        char usbBuf[64];
-//
-//
-//        int len = snprintf(
-//                usbBuf,
-//                sizeof(usbBuf),
-//                "ACC %.2f %.2f %.2f\r\n",
-//                accel.x,
-//                accel.y,
-//                accel.z
-//        );
-//
-//
-//        if(len > 0)
-//        {
-//            CDC_Transmit_FS(
-//                (uint8_t*)usbBuf,
-//                len
-//            );
-//        }
-//    }
+//    return battery_.read(frame.battery);
 //}

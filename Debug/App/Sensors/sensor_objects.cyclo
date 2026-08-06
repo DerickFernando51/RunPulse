@@ -1,6 +1,9 @@
-../App/Sensors/sensor_objects.cpp:19:2:void __static_initialization_and_destruction_0()	1
-../App/Interfaces/ISensor.h:7:13:ISensor::~ISensor()	1
-../App/Interfaces/ISensor.h:7:13:virtual ISensor::~ISensor()	1
+../App/Interfaces/IPPGSensor.h:42:13:IPPGSensor::~IPPGSensor()	1
+../App/Interfaces/IPPGSensor.h:42:13:virtual IPPGSensor::~IPPGSensor()	1
+../App/Interfaces/ISensor.h:15:13:ISensor::~ISensor()	1
+../App/Interfaces/ISensor.h:15:13:virtual ISensor::~ISensor()	1
+../App/Sensors/sensor_objects.cpp:30:6:void Sensors_Init()	1
+../App/Sensors/sensor_objects.cpp:33:1:void __static_initialization_and_destruction_0()	1
 ../App/Interfaces/IBatteryMonitor.h:11:13:IBatteryMonitor::~IBatteryMonitor()	1
 ../App/Interfaces/IBatteryMonitor.h:11:13:virtual IBatteryMonitor::~IBatteryMonitor()	1
 ../App/Sensors/MAX17048/MAX17048.h:10:7:MAX17048::~MAX17048()	1
@@ -9,10 +12,8 @@
 ../App/Interfaces/IIMUSensor.h:19:13:virtual IIMUSensor::~IIMUSensor()	1
 ../App/Sensors/KX126/KX126.h:27:7:KX126::~KX126()	1
 ../App/Sensors/KX126/KX126.h:27:7:virtual KX126::~KX126()	1
-../App/Interfaces/IPPGSensor.h:19:13:IPPGSensor::~IPPGSensor()	1
-../App/Interfaces/IPPGSensor.h:19:13:virtual IPPGSensor::~IPPGSensor()	1
-../App/Sensors/MAX30102/MAX30102.h:10:7:MAX30102::~MAX30102()	1
-../App/Sensors/MAX30102/MAX30102.h:10:7:virtual MAX30102::~MAX30102()	1
-../App/Sensors/sensor_objects.cpp:19:2:void __static_initialization_and_destruction_1()	1
-../App/Sensors/sensor_objects.cpp:19:2:cpp)	1
-../App/Sensors/sensor_objects.cpp:19:2:cpp)	1
+../App/Sensors/MAX30102/MAX30102.h:29:7:MAX30102::~MAX30102()	1
+../App/Sensors/MAX30102/MAX30102.h:29:7:virtual MAX30102::~MAX30102()	1
+../App/Sensors/sensor_objects.cpp:33:1:void __static_initialization_and_destruction_1()	1
+../App/Sensors/sensor_objects.cpp:33:1:cpp)	1
+../App/Sensors/sensor_objects.cpp:33:1:cpp)	1

@@ -185,6 +185,10 @@ void RTC_WKUP_IRQHandler(void)
 void DMA1_Channel1_IRQHandler(void)
 {
   /* USER CODE BEGIN DMA1_Channel1_IRQn 0 */
+//	 CDC_Transmit_FS(
+//	      (uint8_t*)"DMA IRQ\r\n",
+//	      8
+//	  );
 
   /* USER CODE END DMA1_Channel1_IRQn 0 */
   HAL_DMA_IRQHandler(&hdma_i2c1_rx);
