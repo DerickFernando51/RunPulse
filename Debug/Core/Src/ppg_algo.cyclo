@@ -1,0 +1,9 @@
+../Core/Src/ppg_algo.c:27:14:PPG_MeanU32	2
+../Core/Src/ppg_algo.c:36:13:PPG_Smooth	2
+../Core/Src/ppg_algo.c:45:14:PPG_MeanFloat	2
+../Core/Src/ppg_algo.c:52:14:PPG_AcRmsFloat	2
+../Core/Src/ppg_algo.c:63:14:PPG_EstimateHR	10
+../Core/Src/ppg_algo.c:100:13:PPG_Compute	6
+../Core/Src/ppg_algo.c:130:6:PPG_Init	1
+../Core/Src/ppg_algo.c:138:6:PPG_PushSample	7
+../Core/Src/ppg_algo.c:183:14:PPG_GetLastResult	1

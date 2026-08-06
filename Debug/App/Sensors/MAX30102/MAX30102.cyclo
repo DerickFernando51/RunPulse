@@ -1,0 +1,16 @@
+../App/Interfaces/ISensor.h:4:7:constexpr ISensor::ISensor()	1
+../App/Interfaces/ISensor.h:7:13:ISensor::~ISensor()	1
+../App/Interfaces/ISensor.h:7:13:virtual ISensor::~ISensor()	1
+../App/Interfaces/IPPGSensor.h:15:7:constexpr IPPGSensor::IPPGSensor()	1
+../App/Interfaces/IPPGSensor.h:19:13:IPPGSensor::~IPPGSensor()	1
+../App/Interfaces/IPPGSensor.h:19:13:virtual IPPGSensor::~IPPGSensor()	1
+../App/Sensors/MAX30102/MAX30102.cpp:11:1:MAX30102::MAX30102(I2C_HandleTypeDef*)	1
+../App/Sensors/MAX30102/MAX30102.cpp:22:6:virtual bool MAX30102::init()	1
+../App/Sensors/MAX30102/MAX30102.cpp:36:6:virtual bool MAX30102::startReadDMA()	1
+../App/Sensors/MAX30102/MAX30102.cpp:55:6:virtual bool MAX30102::dataReady() const	1
+../App/Sensors/MAX30102/MAX30102.cpp:62:6:virtual bool MAX30102::getSample(PPGData&)	2
+../App/Sensors/MAX30102/MAX30102.cpp:94:6:virtual bool MAX30102::fingerPresent(const PPGData&) const	1
+../App/Sensors/MAX30102/MAX30102.cpp:102:6:void MAX30102::rxCompleteCallback(I2C_HandleTypeDef*)	2
+../App/Sensors/MAX30102/MAX30102.cpp:115:6:bool MAX30102::writeRegister(uint8_t, uint8_t)	1
+../App/Sensors/MAX30102/MAX30102.h:10:7:MAX30102::~MAX30102()	1
+../App/Sensors/MAX30102/MAX30102.h:10:7:virtual MAX30102::~MAX30102()	1

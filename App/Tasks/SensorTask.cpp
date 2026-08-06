@@ -1,21 +1,45 @@
-#include "Tasks.h"
+#include "tasks.h"
 #include "SensorManager.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include "string.h"
+
+extern "C"
+{
+#include "usbd_cdc_if.h"
+}
 
 
 extern SensorManager sensors;
 
-
 void SensorTask(void *argument)
 {
+    vTaskDelay(pdMS_TO_TICKS(3000));
 
-    TickType_t lastWake =
-        xTaskGetTickCount();
+    char msg[] = "TASK START\r\n";
+
+       CDC_Transmit_FS(
+           (uint8_t*)msg,
+           strlen(msg)
+       );
+
+       vTaskDelay(pdMS_TO_TICKS(3000));
 
 
-    uint32_t batteryTimer = 0;
+    if(sensors.init())
+    {
+        char msg[]="SENSORS INIT OK\r\n";
+
+        CDC_Transmit_FS(
+            (uint8_t*)msg,
+            strlen(msg)
+        );
+    }
 
 
-    sensors.init();
+    TickType_t lastWake = xTaskGetTickCount();
 
 
     while(1)
@@ -24,24 +48,10 @@ void SensorTask(void *argument)
         sensors.sampleFast();
 
 
-
-        batteryTimer += 20;
-
-
-        if(batteryTimer >= 1000)
-        {
-            batteryTimer = 0;
-
-            sensors.sampleBattery();
-        }
-
-
-
         vTaskDelayUntil(
             &lastWake,
             pdMS_TO_TICKS(20)
         );
 
     }
-
 }

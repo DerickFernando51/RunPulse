@@ -2,6 +2,7 @@
 #define IPPGSENSOR_H
 
 #include "ISensor.h"
+#include <cstdint>
 
 
 struct PPGData

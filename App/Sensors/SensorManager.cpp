@@ -1,5 +1,13 @@
 #include "SensorManager.h"
 
+#include "usbd_cdc_if.h"
+
+#include "FreeRTOS.h"
+#include "task.h"
+
+#include <cstdio>
+#include <cstring>
+
 
 SensorManager::SensorManager(
         MAX30102& ppg,
@@ -27,53 +35,89 @@ bool SensorManager::init()
 
 }
 
-
-
 void SensorManager::sampleFast()
 {
-
-    // IMU 50Hz
-
     AccelData accel;
 
-    if(imu_.readAcceleration(accel))
+
+    if(!imu_.readAcceleration(accel))
     {
-        // store/send
+        char msg[]="KX126 READ FAIL\r\n";
+
+        CDC_Transmit_FS(
+            (uint8_t*)msg,
+            strlen(msg)
+        );
+
+        return;
     }
 
 
+    char usbBuf[64];
 
-    // PPG DMA
 
-    if(!ppg_.dataReady())
-    {
-        ppg_.startReadDMA();
-    }
-    else
-    {
-        PPGData ppgData;
+    int len = snprintf(
+        usbBuf,
+        sizeof(usbBuf),
+        "ACC %.4f %.4f %.4f\r\n",
+        accel.x,
+        accel.y,
+        accel.z
+    );
 
-        if(ppg_.getSample(ppgData))
-        {
-            // store/send
-        }
-    }
-
+    CDC_Transmit_FS(
+        (uint8_t*)usbBuf,
+        len
+    );
 }
 
-
-
-void SensorManager::sampleBattery()
-{
-
-    float voltage =
-        battery_.getVoltage();
-
-
-    float soc =
-        battery_.getStateOfCharge();
-
-
-    // store/send battery info
-
-}
+//void SensorManager::sampleFast()
+//{
+//    static uint32_t printCounter = 0;
+//
+//    AccelData accel;
+//
+//
+//    if(!imu_.readAcceleration(accel))
+//    {
+//        char msg[] = "KX126 READ FAIL\r\n";
+//
+//        CDC_Transmit_FS(
+//            (uint8_t*)msg,
+//            strlen(msg)
+//        );
+//
+//        return;
+//    }
+//
+//
+//    printCounter++;
+//
+//
+//    if(printCounter >= 50)
+//    {
+//        printCounter = 0;
+//
+//
+//        char usbBuf[64];
+//
+//
+//        int len = snprintf(
+//                usbBuf,
+//                sizeof(usbBuf),
+//                "ACC %.2f %.2f %.2f\r\n",
+//                accel.x,
+//                accel.y,
+//                accel.z
+//        );
+//
+//
+//        if(len > 0)
+//        {
+//            CDC_Transmit_FS(
+//                (uint8_t*)usbBuf,
+//                len
+//            );
+//        }
+//    }
+//}

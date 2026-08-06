@@ -17,6 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
+#include "tasks.h"
 #include "main.h"
 #include "cmsis_os.h"
 #include "usb_device.h"
@@ -30,9 +31,10 @@
 #include "string.h"
 #include "stm32_lpm.h"
 #include "math.h"
-#include "max30102.h"
-#include "kx126.h"
-#include "ppg_algo.h"
+
+//#include "max30102.h"
+//#include "kx126.h"
+//#include "ppg_algo.h"
 
 extern USBD_HandleTypeDef hUsbDeviceFS;
 
@@ -81,10 +83,10 @@ char usb_buffer[64];
 
 
 
-#define SAMPLE_PERIOD_MS   100
-#define BLE_PERIOD_MS      50
-
-MAX30102_Sample_t sample;
+//#define SAMPLE_PERIOD_MS   100
+//#define BLE_PERIOD_MS      50
+//
+//MAX30102_Sample_t sample;
 
 /* USER CODE END PV */
 
@@ -108,87 +110,87 @@ void StartDefaultTask(void *argument);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-#define MAX30102_ADDR (0x57 << 1)
-#define MAX17048_ADDR (0x36 << 1)
-
-
-
-
-uint8_t fifo_data[6];
-uint32_t red, ir;
-char msg[64];
-
-
-
-
-
-
-void MAX17048_Read_VCELL(void)
-{
-    uint8_t data[2];
-
-    if (HAL_I2C_Mem_Read(&hi2c3,
-                         MAX17048_ADDR,
-                         0x02,
-                         I2C_MEMADD_SIZE_8BIT,
-                         data,
-                         2,
-                         100) == HAL_OK)
-    {
-        uint16_t raw = (data[0] << 8) | data[1];
-
-        raw >>= 4;
-
-        uint32_t voltage_mV = (raw * 125) / 100;
-
-        snprintf(usb_buffer,
-                 sizeof(usb_buffer),
-                 "VCELL: %lu.%03lu V\r\n",
-                 voltage_mV / 1000,
-                 voltage_mV % 1000);
-    }
-    else
-    {
-        snprintf(usb_buffer,
-                 sizeof(usb_buffer),
-                 "VCELL READ FAIL\r\n");
-    }
-
-
-    CDC_Transmit_FS((uint8_t*)usb_buffer,
-                    strlen(usb_buffer));
-}
-
-void I2C_Check_MAX17048(void)
-{
-    char msg[64];
-
-    if (HAL_I2C_IsDeviceReady(&hi2c3, MAX17048_ADDR, 3, 100) == HAL_OK)
-    {
-        sprintf(msg, "MAX17048 FOUND (0x36)\r\n");
-    }
-    else
-    {
-        sprintf(msg, "MAX17048 NOT FOUND\r\n");
-    }
-
-    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
-}
-
-
-
-
-
+//#define MAX30102_ADDR (0x57 << 1)
+//#define MAX17048_ADDR (0x36 << 1)
+//
+//
+//
+//
+//uint8_t fifo_data[6];
+//uint32_t red, ir;
+//char msg[64];
+//
+//
+//
+//
+//
+//
+//void MAX17048_Read_VCELL(void)
+//{
+//    uint8_t data[2];
+//
+//    if (HAL_I2C_Mem_Read(&hi2c3,
+//                         MAX17048_ADDR,
+//                         0x02,
+//                         I2C_MEMADD_SIZE_8BIT,
+//                         data,
+//                         2,
+//                         100) == HAL_OK)
+//    {
+//        uint16_t raw = (data[0] << 8) | data[1];
+//
+//        raw >>= 4;
+//
+//        uint32_t voltage_mV = (raw * 125) / 100;
+//
+//        snprintf(usb_buffer,
+//                 sizeof(usb_buffer),
+//                 "VCELL: %lu.%03lu V\r\n",
+//                 voltage_mV / 1000,
+//                 voltage_mV % 1000);
+//    }
+//    else
+//    {
+//        snprintf(usb_buffer,
+//                 sizeof(usb_buffer),
+//                 "VCELL READ FAIL\r\n");
+//    }
+//
+//
+//    CDC_Transmit_FS((uint8_t*)usb_buffer,
+//                    strlen(usb_buffer));
+//}
+//
+//void I2C_Check_MAX17048(void)
+//{
+//    char msg[64];
+//
+//    if (HAL_I2C_IsDeviceReady(&hi2c3, MAX17048_ADDR, 3, 100) == HAL_OK)
+//    {
+//        sprintf(msg, "MAX17048 FOUND (0x36)\r\n");
+//    }
+//    else
+//    {
+//        sprintf(msg, "MAX17048 NOT FOUND\r\n");
+//    }
+//
+//    CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+//}
+//
+//
+//
+//
+//
 static void BusyDelay(uint32_t ms)
 {
     uint32_t start = HAL_GetTick();
     while ((HAL_GetTick() - start) < ms);
 }
-
-uint8_t USB_IsConnected(void)
-{
-    return (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED);
-}
+//
+//uint8_t USB_IsConnected(void)
+//{
+//    return (hUsbDeviceFS.dev_state == USBD_STATE_CONFIGURED);
+//}
 
 
 
@@ -239,16 +241,17 @@ int main(void)
   MX_RTC_Init();
   MX_RF_Init();
   /* USER CODE BEGIN 2 */
+  MX_USB_Device_Init();
 
+  HAL_Delay(3000);
 
-  MAX30102_Init(&hi2c1);
-  KX126_Init();
-  PPG_Init();
+//  MAX30102_Init(&hi2c1);
+//  KX126_Init();
+//  PPG_Init();
+//
+//  uint8_t id;
+//  id = KX126_ReadReg(KX126_WHO_AM_I);
 
-  uint8_t id;
-  id = KX126_ReadReg(KX126_WHO_AM_I);
-
-  BusyDelay(3000);
 
 
   /* USER CODE END 2 */
@@ -274,10 +277,12 @@ int main(void)
 
   /* Create the thread(s) */
   /* creation of defaultTask */
-  defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+  //defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
+
+  AppTasks_Init();
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_EVENTS */
@@ -285,7 +290,7 @@ int main(void)
   /* USER CODE END RTOS_EVENTS */
 
   /* Init code for STM32_WPAN */
-  MX_APPE_Init();
+  //MX_APPE_Init();
 
   /* Start scheduler */
   osKernelStart();
@@ -296,6 +301,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
+	   HAL_Delay(1000);
 //	  static uint32_t last_sample = 0;
 //	  static uint32_t last_ble    = 0;
 //	  static uint8_t  was_finger_present = 0;
@@ -777,7 +785,7 @@ static void MX_GPIO_Init(void)
 
 void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
 {
-	MAX30102_I2C_RxCpltCallback(hi2c);
+	//MAX30102_I2C_RxCpltCallback(hi2c);
 }
 
 
@@ -790,18 +798,18 @@ void HAL_I2C_MemRxCpltCallback(I2C_HandleTypeDef *hi2c)
   * @retval None
   */
 /* USER CODE END Header_StartDefaultTask */
-void StartDefaultTask(void *argument)
-{
-  /* init code for USB_Device */
-  MX_USB_Device_Init();
-  /* USER CODE BEGIN 5 */
-  /* Infinite loop */
-  for(;;)
-  {
-    osDelay(1);
-  }
-  /* USER CODE END 5 */
-}
+//void StartDefaultTask(void *argument)
+//{
+//  /* init code for USB_Device */
+//  MX_USB_Device_Init();
+//  /* USER CODE BEGIN 5 */
+//  /* Infinite loop */
+//  for(;;)
+//  {
+//    osDelay(1);
+//  }
+//  /* USER CODE END 5 */
+//}
 
 /**
   * @brief  Period elapsed callback in non blocking mode
