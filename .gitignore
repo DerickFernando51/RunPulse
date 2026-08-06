@@ -1,0 +1,47 @@
+# STM32CubeIDE generated files
+.metadata/
+.settings/
+.project
+.cproject
+.mxproject
+
+# Build output
+Debug/
+Release/
+build/
+
+# Compiled files
+*.o
+*.elf
+*.hex
+*.bin
+*.map
+*.list
+*.d
+*.su
+
+# CubeIDE indexes
+*.launch
+
+# Backup files
+*~
+*.bak
+*.tmp
+
+# OS files
+.DS_Store
+
+# Python files (if using scripts/tools)
+__pycache__/
+*.pyc
+
+# VS Code (if used)
+.vscode/
+
+# CMake (if used)
+CMakeFiles/
+CMakeCache.txt
+cmake-build-*/
+
+# Logs
+*.log
