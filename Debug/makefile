@@ -35,6 +35,7 @@ RM := rm -rf
 -include App/Sensors/MAX17048/subdir.mk
 -include App/Sensors/KX126/subdir.mk
 -include App/Sensors/subdir.mk
+-include App/DSP/subdir.mk
 -include objects.mk
 
 ifneq ($(MAKECMDGOALS),clean)

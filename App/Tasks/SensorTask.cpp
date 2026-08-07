@@ -64,7 +64,7 @@ void SensorTask(void *argument)
 
         vTaskDelayUntil(
             &lastWake,
-            pdMS_TO_TICKS(200)
+            pdMS_TO_TICKS(10)
         );
 
     }

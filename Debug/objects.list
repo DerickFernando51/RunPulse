@@ -1,3 +1,4 @@
+"./App/DSP/ppg_dsp.o"
 "./App/Sensors/KX126/KX126.o"
 "./App/Sensors/MAX17048/MAX17048.o"
 "./App/Sensors/MAX30102/MAX30102.o"

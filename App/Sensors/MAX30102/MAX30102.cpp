@@ -80,10 +80,8 @@ bool MAX30102::init()
 
 
 
-    // ADC configuration
-    if(!writeRegister(
-            REG_SPO2_CONFIG,
-            0x27))
+    // ADC configuration - 100 Hz
+    if(!writeRegister(REG_SPO2_CONFIG,0x2B))
     {
         return false;
     }

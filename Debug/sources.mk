@@ -38,6 +38,7 @@ CPP_DEPS :=
 
 # Every subdirectory with source files must be described here
 SUBDIRS := \
+App/DSP \
 App/Sensors/KX126 \
 App/Sensors/MAX17048 \
 App/Sensors/MAX30102 \

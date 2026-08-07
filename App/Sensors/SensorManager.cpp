@@ -4,6 +4,7 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
+#include "ppg_dsp.h"
 
 #include <cstdio>
 #include <cstring>
@@ -89,24 +90,23 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
     // MAX30102 DMA
 
-    if(!ppg_.startReadDMA())
+    if(ppg_.startReadDMA())
     {
-        frame.ir = 0;
-        frame.red = 0;
-        return false;
-    }
+        if(ppg_.waitForData(10))
+        {
+            PPGData ppg;
 
-    PPGData ppg;
-
-    if(ppg_.getSample(ppg))
-    {
-        frame.ir  = ppg.ir;
-        frame.red = ppg.red;
-    }
-    else
-    {
-        frame.ir = 0;
-        frame.red = 0;
+            if(ppg_.getSample(ppg))
+            {
+                if(ppg_.fingerPresent(ppg))
+                {
+                    PPG_PushSample(
+                        ppg.red,
+                        ppg.ir
+                    );
+                }
+            }
+        }
     }
 
 
@@ -139,22 +139,58 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     }
 
 
-    // USB DEBUG OUTPUT - PPG/IMU
 
-    char usbBuf[128];
+    // USB DEBUG OUTPUT - IMU + HR + SpO2
 
-    int len = snprintf(
-        usbBuf,
-        sizeof(usbBuf),
-        "ACC %.3f %.3f %.3f | IR %lu RED %lu\r\n",
-        frame.ax,
-        frame.ay,
-        frame.az,
-        frame.ir,
-        frame.red
-    );
+    PPG_Result_t result = PPG_GetResult();
 
-    CDC_Transmit_FS((uint8_t*)usbBuf, len);
+    static uint8_t printCounter = 0;
+
+    printCounter++;
+
+    if(printCounter >= 100)   // every 1 second
+    {
+        printCounter = 0;
+
+        PPG_Result_t result = PPG_GetResult();
+
+        char usbBuf[128];
+
+        if(result.valid)
+        {
+            int len = snprintf(
+                usbBuf,
+                sizeof(usbBuf),
+                "ACC %.3f %.3f %.3f | HR %u BPM SpO2 %u%%\r\n",
+                frame.ax,
+                frame.ay,
+                frame.az,
+                result.heart_rate,
+                result.spo2
+            );
+
+            CDC_Transmit_FS(
+                (uint8_t*)usbBuf,
+                len
+            );
+        }
+        else
+        {
+            int len = snprintf(
+                usbBuf,
+                sizeof(usbBuf),
+                "ACC %.3f %.3f %.3f | HR -- BPM SpO2 --\r\n",
+                frame.ax,
+                frame.ay,
+                frame.az
+            );
+
+            CDC_Transmit_FS(
+                (uint8_t*)usbBuf,
+                len
+            );
+        }
+    }
 
     return true;
 }
