@@ -6,8 +6,8 @@
 ../App/Sensors/sensor_objects.cpp:33:1:void __static_initialization_and_destruction_0()	8	static
 ../App/Interfaces/IBatteryMonitor.h:11:13:IBatteryMonitor::~IBatteryMonitor()	16	static
 ../App/Interfaces/IBatteryMonitor.h:11:13:virtual IBatteryMonitor::~IBatteryMonitor()	16	static
-../App/Sensors/MAX17048/MAX17048.h:10:7:MAX17048::~MAX17048()	16	static
-../App/Sensors/MAX17048/MAX17048.h:10:7:virtual MAX17048::~MAX17048()	16	static
+../App/Sensors/MAX17048/MAX17048.h:7:7:MAX17048::~MAX17048()	16	static
+../App/Sensors/MAX17048/MAX17048.h:7:7:virtual MAX17048::~MAX17048()	16	static
 ../App/Interfaces/IIMUSensor.h:19:13:IIMUSensor::~IIMUSensor()	16	static
 ../App/Interfaces/IIMUSensor.h:19:13:virtual IIMUSensor::~IIMUSensor()	16	static
 ../App/Sensors/KX126/KX126.h:27:7:KX126::~KX126()	16	static

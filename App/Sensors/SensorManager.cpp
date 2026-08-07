@@ -65,8 +65,9 @@ bool SensorManager::init()
 
 bool SensorManager::sampleFast(SensorFrame& frame)
 {
-    AccelData accel;
+    static uint8_t batteryCounter = 0;
 
+    AccelData accel;
 
     // KX126
     if(!imu_.readAcceleration(accel))
@@ -81,11 +82,9 @@ bool SensorManager::sampleFast(SensorFrame& frame)
         return false;
     }
 
-
     frame.ax = accel.x;
     frame.ay = accel.y;
     frame.az = accel.z;
-
 
 
     // MAX30102 DMA
@@ -111,10 +110,38 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     }
 
 
-    // USB DEBUG OUTPUT
+    // MAX17048 (1 Hz)
+    batteryCounter++;
+
+    if(batteryCounter >= 50)
+    {
+        batteryCounter = 0;
+
+        frame.batteryVoltage = battery_.getVoltage();
+        frame.batterySOC     = battery_.getStateOfCharge();
+
+
+        // USB DEBUG OUTPUT - BAT
+        char usbBuf[64];
+
+            int len = snprintf(
+                usbBuf,
+                sizeof(usbBuf),
+                "BAT %.2fV %.0f%%\r\n",
+                frame.batteryVoltage,
+                frame.batterySOC
+            );
+
+            CDC_Transmit_FS(
+                (uint8_t*)usbBuf,
+                len
+            );
+    }
+
+
+    // USB DEBUG OUTPUT - PPG/IMU
 
     char usbBuf[128];
-
 
     int len = snprintf(
         usbBuf,
@@ -127,18 +154,7 @@ bool SensorManager::sampleFast(SensorFrame& frame)
         frame.red
     );
 
-
-    CDC_Transmit_FS(
-        (uint8_t*)usbBuf,
-        len
-    );
-
+    CDC_Transmit_FS((uint8_t*)usbBuf, len);
 
     return true;
 }
-
-
-//bool SensorManager::sampleBattery(SensorFrame& frame)
-//{
-//    return battery_.read(frame.battery);
-//}

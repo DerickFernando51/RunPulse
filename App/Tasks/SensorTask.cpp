@@ -59,17 +59,12 @@ void SensorTask(void *argument)
 
     	if(sensors.sampleFast(frame))
     	{
-    	    // frame contains:
-    	    // frame.ax
-    	    // frame.ay
-    	    // frame.az
-    	    // frame.ir
-    	    // frame.red
+
     	}
 
         vTaskDelayUntil(
             &lastWake,
-            pdMS_TO_TICKS(20)
+            pdMS_TO_TICKS(200)
         );
 
     }

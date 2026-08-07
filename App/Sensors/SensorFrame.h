@@ -12,7 +12,8 @@ struct SensorFrame
     uint32_t ir;
     uint32_t red;
 
-    //float battery;
+    float batteryVoltage;
+    float batterySOC;
 };
 
 #endif
