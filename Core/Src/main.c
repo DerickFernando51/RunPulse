@@ -293,7 +293,9 @@ int main(void)
   /* USER CODE END RTOS_EVENTS */
 
   /* Init code for STM32_WPAN */
-  //MX_APPE_Init();
+  MX_APPE_Init();
+
+
 
   /* Start scheduler */
   osKernelStart();
@@ -305,8 +307,8 @@ int main(void)
   while (1)
   {
 
-	  CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
-	   HAL_Delay(1000);
+//	  CDC_Transmit_FS((uint8_t*)"ALIVE\r\n", 7);
+//	   HAL_Delay(1000);
 //	  static uint32_t last_sample = 0;
 //	  static uint32_t last_ble    = 0;
 //	  static uint8_t  was_finger_present = 0;
@@ -402,7 +404,9 @@ int main(void)
 
     /* USER CODE END WHILE */
 
+
     /* USER CODE BEGIN 3 */
+	//MX_APPE_Process();
   }
   /* USER CODE END 3 */
 }

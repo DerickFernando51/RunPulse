@@ -8,6 +8,8 @@
 #include "ppg_dsp.h"
 #include "imu_dsp.h"
 
+#include "tasks.h"
+
 #include <cstring>
 #include <cstdio>
 
@@ -190,46 +192,48 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
 
     // USB DEBUG - 1 Hz
-
     printCounter++;
 
     if (printCounter >= 50)
     {
         printCounter = 0;
 
-        PPG_Result_t ppgResult = PPG_GetResult();
         IMU_Result imuResult = IMU_GetResult();
 
-        char usbBuf[128];
+        // -------------------------
+        // USB DEBUG
+        // -------------------------
 
-        if (ppgResult.valid && imuResult.valid)
+        char usbBuf[64];
+
+        int len = snprintf(
+            usbBuf,
+            sizeof(usbBuf),
+            "Cadence: %u SPM\r\n",
+            imuResult.cadence
+        );
+
+        CDC_Transmit_FS(
+            (uint8_t*)usbBuf,
+            len
+        );
+
+
+        // -------------------------
+        // BLE QUEUE
+        // -------------------------
+
+        Cadence_BLE_Data_t bleData;
+
+        bleData.cadence = imuResult.cadence;
+
+        if (cadenceBleQueue != NULL)
         {
-            int len = snprintf(
-                usbBuf,
-                sizeof(usbBuf),
-                "Cadence: %u SPM | HR: %u BPM | SpO2: %u%%\r\n",
-                imuResult.cadence,
-                ppgResult.heart_rate,
-                ppgResult.spo2
-            );
-
-            CDC_Transmit_FS(
-                (uint8_t*)usbBuf,
-                len
-            );
-        }
-        else
-        {
-            int len = snprintf(
-                usbBuf,
-                sizeof(usbBuf),
-                "Cadence: %u SPM | HR -- BPM | SpO2 --\r\n",
-                imuResult.cadence
-            );
-
-            CDC_Transmit_FS(
-                (uint8_t*)usbBuf,
-                len
+            osMessageQueuePut(
+                cadenceBleQueue,
+                &bleData,
+                0,
+                0
             );
         }
     }

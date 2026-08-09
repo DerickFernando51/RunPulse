@@ -5,33 +5,18 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
-../App/Tasks/BLETask.cpp \
-../App/Tasks/FSMTask.cpp \
+../App/Tasks/BLESeqTask.cpp \
 ../App/Tasks/SensorTask.cpp \
-../App/Tasks/battery_task.cpp \
-../App/Tasks/imu_task.cpp \
-../App/Tasks/ppg_task.cpp \
-../App/Tasks/print_task.cpp \
 ../App/Tasks/tasks.cpp 
 
 OBJS += \
-./App/Tasks/BLETask.o \
-./App/Tasks/FSMTask.o \
+./App/Tasks/BLESeqTask.o \
 ./App/Tasks/SensorTask.o \
-./App/Tasks/battery_task.o \
-./App/Tasks/imu_task.o \
-./App/Tasks/ppg_task.o \
-./App/Tasks/print_task.o \
 ./App/Tasks/tasks.o 
 
 CPP_DEPS += \
-./App/Tasks/BLETask.d \
-./App/Tasks/FSMTask.d \
+./App/Tasks/BLESeqTask.d \
 ./App/Tasks/SensorTask.d \
-./App/Tasks/battery_task.d \
-./App/Tasks/imu_task.d \
-./App/Tasks/ppg_task.d \
-./App/Tasks/print_task.d \
 ./App/Tasks/tasks.d 
 
 
@@ -42,7 +27,7 @@ App/Tasks/%.o App/Tasks/%.su App/Tasks/%.cyclo: ../App/Tasks/%.cpp App/Tasks/sub
 clean: clean-App-2f-Tasks
 
 clean-App-2f-Tasks:
-	-$(RM) ./App/Tasks/BLETask.cyclo ./App/Tasks/BLETask.d ./App/Tasks/BLETask.o ./App/Tasks/BLETask.su ./App/Tasks/FSMTask.cyclo ./App/Tasks/FSMTask.d ./App/Tasks/FSMTask.o ./App/Tasks/FSMTask.su ./App/Tasks/SensorTask.cyclo ./App/Tasks/SensorTask.d ./App/Tasks/SensorTask.o ./App/Tasks/SensorTask.su ./App/Tasks/battery_task.cyclo ./App/Tasks/battery_task.d ./App/Tasks/battery_task.o ./App/Tasks/battery_task.su ./App/Tasks/imu_task.cyclo ./App/Tasks/imu_task.d ./App/Tasks/imu_task.o ./App/Tasks/imu_task.su ./App/Tasks/ppg_task.cyclo ./App/Tasks/ppg_task.d ./App/Tasks/ppg_task.o ./App/Tasks/ppg_task.su ./App/Tasks/print_task.cyclo ./App/Tasks/print_task.d ./App/Tasks/print_task.o ./App/Tasks/print_task.su ./App/Tasks/tasks.cyclo ./App/Tasks/tasks.d ./App/Tasks/tasks.o ./App/Tasks/tasks.su
+	-$(RM) ./App/Tasks/BLESeqTask.cyclo ./App/Tasks/BLESeqTask.d ./App/Tasks/BLESeqTask.o ./App/Tasks/BLESeqTask.su ./App/Tasks/SensorTask.cyclo ./App/Tasks/SensorTask.d ./App/Tasks/SensorTask.o ./App/Tasks/SensorTask.su ./App/Tasks/tasks.cyclo ./App/Tasks/tasks.d ./App/Tasks/tasks.o ./App/Tasks/tasks.su
 
 .PHONY: clean-App-2f-Tasks
 
