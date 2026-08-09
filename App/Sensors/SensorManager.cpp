@@ -4,61 +4,90 @@
 
 #include "FreeRTOS.h"
 #include "task.h"
-#include "ppg_dsp.h"
 
-#include <cstdio>
+#include "ppg_dsp.h"
+#include "imu_dsp.h"
+
 #include <cstring>
+#include <cstdio>
 
 
 SensorManager::SensorManager(
-        MAX30102& ppg,
-        KX126& imu,
-        MAX17048& battery)
-:
-ppg_(ppg),
-imu_(imu),
-battery_(battery)
+    MAX30102& ppg,
+    KX126& imu,
+    MAX17048& battery)
+    :
+    ppg_(ppg),
+    imu_(imu),
+    battery_(battery)
 {
-
 }
-
 
 
 bool SensorManager::init()
 {
-
-    if(!ppg_.init())
+    // MAX30102
+    if (!ppg_.init())
     {
-        char msg[]="MAX30102 INIT FAIL\r\n";
-        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        char msg[] = "MAX30102 INIT FAIL\r\n";
+
+        CDC_Transmit_FS(
+            (uint8_t*)msg,
+            strlen(msg)
+        );
+
         return false;
     }
 
-    char msg1[]="MAX30102 OK\r\n";
-    CDC_Transmit_FS((uint8_t*)msg1, strlen(msg1));
+    char msg1[] = "MAX30102 OK\r\n";
+
+    CDC_Transmit_FS(
+        (uint8_t*)msg1,
+        strlen(msg1)
+    );
 
 
-    if(!imu_.init())
+    // KX126
+    if (!imu_.init())
     {
-        char msg[]="KX126 INIT FAIL\r\n";
-        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        char msg[] = "KX126 INIT FAIL\r\n";
+
+        CDC_Transmit_FS(
+            (uint8_t*)msg,
+            strlen(msg)
+        );
+
         return false;
     }
 
-    char msg2[]="KX126 OK\r\n";
-    CDC_Transmit_FS((uint8_t*)msg2, strlen(msg2));
+    char msg2[] = "KX126 OK\r\n";
+
+    CDC_Transmit_FS(
+        (uint8_t*)msg2,
+        strlen(msg2)
+    );
 
 
-    if(!battery_.init())
+    // MAX17048
+    if (!battery_.init())
     {
-        char msg[]="MAX17048 INIT FAIL\r\n";
-        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        char msg[] = "MAX17048 INIT FAIL\r\n";
+
+        CDC_Transmit_FS(
+            (uint8_t*)msg,
+            strlen(msg)
+        );
+
         return false;
     }
 
 
-    char msg3[]="ALL SENSORS OK\r\n";
-    CDC_Transmit_FS((uint8_t*)msg3, strlen(msg3));
+    char msg3[] = "ALL SENSORS OK\r\n";
+
+    CDC_Transmit_FS(
+        (uint8_t*)msg3,
+        strlen(msg3)
+    );
 
     return true;
 }
@@ -67,11 +96,16 @@ bool SensorManager::init()
 bool SensorManager::sampleFast(SensorFrame& frame)
 {
     static uint8_t batteryCounter = 0;
+    static uint8_t printCounter = 0;
 
     AccelData accel;
 
+
+    // =========================================================
     // KX126
-    if(!imu_.readAcceleration(accel))
+    // =========================================================
+
+    if (!imu_.readAcceleration(accel))
     {
         char msg[] = "KX126 READ FAIL\r\n";
 
@@ -88,21 +122,32 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     frame.az = accel.z;
 
 
-    // MAX30102 DMA
+    // IMU DSP
 
-    if(ppg_.startReadDMA())
+    IMU_PushSample(
+        frame.ax,
+        frame.ay,
+        frame.az
+    );
+
+
+    //  MAX30102 DMA
+
+
+    if (ppg_.startReadDMA())
     {
-        if(ppg_.waitForData(10))
+        if (ppg_.waitForData(10))
         {
-            PPGData ppg;
+            PPGData ppgData;
 
-            if(ppg_.getSample(ppg))
+            if (ppg_.getSample(ppgData))
             {
-                if(ppg_.fingerPresent(ppg))
+                if (ppg_.fingerPresent(ppgData))
                 {
+                	// PPG DSP
                     PPG_PushSample(
-                        ppg.red,
-                        ppg.ir
+                        ppgData.red,
+                        ppgData.ir
                     );
                 }
             }
@@ -110,10 +155,11 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     }
 
 
-    // MAX17048 (1 Hz)
+    // MAX17048 - 1 Hz
+
     batteryCounter++;
 
-    if(batteryCounter >= 50)
+    if (batteryCounter >= 50)
     {
         batteryCounter = 0;
 
@@ -121,52 +167,50 @@ bool SensorManager::sampleFast(SensorFrame& frame)
         frame.batterySOC     = battery_.getStateOfCharge();
 
 
-        // USB DEBUG OUTPUT - BAT
         char usbBuf[64];
 
-            int len = snprintf(
-                usbBuf,
-                sizeof(usbBuf),
-                "BAT %.2fV %.0f%%\r\n",
-                frame.batteryVoltage,
-                frame.batterySOC
-            );
+        int len = snprintf(
+            usbBuf,
+            sizeof(usbBuf),
+            "BAT %.2fV %.0f%%\r\n",
+            frame.batteryVoltage,
+            frame.batterySOC
+        );
 
-            CDC_Transmit_FS(
-                (uint8_t*)usbBuf,
-                len
-            );
+        CDC_Transmit_FS(
+            (uint8_t*)usbBuf,
+            len
+        );
     }
 
 
-
-    // USB DEBUG OUTPUT - IMU + HR + SpO2
+    // PPG RESULT
 
     PPG_Result_t result = PPG_GetResult();
 
-    static uint8_t printCounter = 0;
+
+    // USB DEBUG - 1 Hz
 
     printCounter++;
 
-    if(printCounter >= 100)   // every 1 second
+    if (printCounter >= 50)
     {
         printCounter = 0;
 
-        PPG_Result_t result = PPG_GetResult();
+        PPG_Result_t ppgResult = PPG_GetResult();
+        IMU_Result imuResult = IMU_GetResult();
 
         char usbBuf[128];
 
-        if(result.valid)
+        if (ppgResult.valid && imuResult.valid)
         {
             int len = snprintf(
                 usbBuf,
                 sizeof(usbBuf),
-                "ACC %.3f %.3f %.3f | HR %u BPM SpO2 %u%%\r\n",
-                frame.ax,
-                frame.ay,
-                frame.az,
-                result.heart_rate,
-                result.spo2
+                "Cadence: %u SPM | HR: %u BPM | SpO2: %u%%\r\n",
+                imuResult.cadence,
+                ppgResult.heart_rate,
+                ppgResult.spo2
             );
 
             CDC_Transmit_FS(
@@ -179,10 +223,8 @@ bool SensorManager::sampleFast(SensorFrame& frame)
             int len = snprintf(
                 usbBuf,
                 sizeof(usbBuf),
-                "ACC %.3f %.3f %.3f | HR -- BPM SpO2 --\r\n",
-                frame.ax,
-                frame.ay,
-                frame.az
+                "Cadence: %u SPM | HR -- BPM | SpO2 --\r\n",
+                imuResult.cadence
             );
 
             CDC_Transmit_FS(
@@ -192,5 +234,7 @@ bool SensorManager::sampleFast(SensorFrame& frame)
         }
     }
 
+
     return true;
 }
+

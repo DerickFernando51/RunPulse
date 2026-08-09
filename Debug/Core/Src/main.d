@@ -130,6 +130,7 @@ Core/Src/main.o: ../Core/Src/main.c ../App/Tasks/tasks.h \
  ../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/hci_tl.h \
  ../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/tl.h \
  ../STM32_WPAN/App/custom_stm.h ../Utilities/lpm/tiny_lpm/stm32_lpm.h \
+ ../App/Sensors/sensor_objects.h \
  ../App/Sensors/MAX30102/MAX30102_Callback.h
 ../App/Tasks/tasks.h:
 ../Core/Inc/main.h:
@@ -271,4 +272,5 @@ Core/Src/main.o: ../Core/Src/main.c ../App/Tasks/tasks.h \
 ../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/tl/tl.h:
 ../STM32_WPAN/App/custom_stm.h:
 ../Utilities/lpm/tiny_lpm/stm32_lpm.h:
+../App/Sensors/sensor_objects.h:
 ../App/Sensors/MAX30102/MAX30102_Callback.h:

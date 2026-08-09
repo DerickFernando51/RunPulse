@@ -10,10 +10,8 @@
 #define MIN_HR_BPM           40.0f
 #define MAX_HR_BPM           180.0f
 
-// 60 samples at 100Hz = 0.6s minimum distance (~100 BPM max)
+
 #define MIN_PEAK_DISTANCE_SAMPLES 60
-
-
 #define PEAK_THRESHOLD       0.25f
 
 

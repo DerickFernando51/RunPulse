@@ -68,7 +68,7 @@ App/Sensors/SensorManager.o: ../App/Sensors/SensorManager.cpp \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
- ../App/DSP/ppg_dsp.h
+ ../App/DSP/ppg_dsp.h ../App/DSP/imu_dsp.h
 ../App/Sensors/SensorManager.h:
 ../App/Sensors/SensorFrame.h:
 ../App/Sensors/MAX30102/MAX30102.h:
@@ -144,3 +144,4 @@ App/Sensors/SensorManager.o: ../App/Sensors/SensorManager.cpp \
 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ctlreq.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../App/DSP/ppg_dsp.h:
+../App/DSP/imu_dsp.h:

@@ -3,7 +3,11 @@
 
 #include <stdint.h>
 
-struct SensorFrame
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct
 {
     float ax;
     float ay;
@@ -14,6 +18,11 @@ struct SensorFrame
 
     float batteryVoltage;
     float batterySOC;
-};
+
+} SensorFrame;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

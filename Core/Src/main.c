@@ -32,6 +32,8 @@
 #include "stm32_lpm.h"
 #include "math.h"
 
+
+#include "sensor_objects.h"
 #include "MAX30102_Callback.h"
 
 //#include "max30102.h"
@@ -283,7 +285,6 @@ int main(void)
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
-
   AppTasks_Init();
   /* USER CODE END RTOS_THREADS */
 
