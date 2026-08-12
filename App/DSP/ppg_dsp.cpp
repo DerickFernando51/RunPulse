@@ -340,6 +340,17 @@ static void processPPG()
 
 }
 
+void PPG_SetFingerPresent(bool present)
+{
+    if (!present)
+    {
+        result.heart_rate = 0;
+        result.spo2 = 0;
+        result.valid = 0;
+        hrFiltered = 0;
+    }
+}
+
 
 
 

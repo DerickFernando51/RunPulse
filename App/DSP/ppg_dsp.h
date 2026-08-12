@@ -17,6 +17,7 @@ typedef struct
 
 void PPG_Init(void);
 
+void PPG_SetFingerPresent(bool present);
 
 void PPG_PushSample(
     uint32_t red_val,

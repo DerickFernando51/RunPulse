@@ -2,9 +2,9 @@
 #include "cmsis_os.h"
 
 static osThreadId_t sensorTaskHandle;
-static osThreadId_t bleSeqTaskHandle;
+static osThreadId_t bleTaskHandle;
 
-osMessageQueueId_t cadenceBleQueue;
+osMessageQueueId_t bleQueue;
 
 static const osThreadAttr_t sensorTask_attributes =
 {
@@ -13,18 +13,18 @@ static const osThreadAttr_t sensorTask_attributes =
     .priority = osPriorityHigh
 };
 
-static const osThreadAttr_t bleSeqTask_attributes =
+static const osThreadAttr_t bleTask_attributes =
 {
-    .name = "BLESeqTask",
+    .name = "BLETask",
     .stack_size = 1024 * 4,
     .priority = osPriorityNormal
 };
 
 extern "C" void AppTasks_Init(void)
 {
-	cadenceBleQueue = osMessageQueueNew(
+	bleQueue = osMessageQueueNew(
 	        5,
-	        sizeof(Cadence_BLE_Data_t),
+	        sizeof(BLE_Data_t),
 	        NULL
 	    );
 
@@ -35,10 +35,10 @@ extern "C" void AppTasks_Init(void)
             &sensorTask_attributes
         );
 
-    bleSeqTaskHandle =
+    //bleTaskHandle =
         osThreadNew(
-            BLESeqTask,
+            BLETask,
             NULL,
-            &bleSeqTask_attributes
+            &bleTask_attributes
         );
 }

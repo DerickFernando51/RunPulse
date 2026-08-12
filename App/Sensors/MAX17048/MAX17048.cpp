@@ -1,4 +1,6 @@
 #include "MAX17048.h"
+#include "usbd_cdc_if.h"
+
 
 #define MAX17048_ADDR    (0x36 << 1)
 
@@ -35,15 +37,38 @@ float MAX17048::getVoltage()
     return raw * 0.00125f;
 }
 
+//float MAX17048::getStateOfCharge()
+//{
+//    uint16_t raw =
+//        readRegister(REG_SOC);
+//
+//    // Integer percentage
+//    return raw >> 8;
+//
+//
+//}
+
 float MAX17048::getStateOfCharge()
 {
-    uint16_t raw =
-        readRegister(REG_SOC);
+    uint16_t raw = readRegister(REG_SOC);
 
-    // Integer percentage
-    return raw >> 8;
+    char msg[64];
 
+    int len = snprintf(
+        msg,
+        sizeof(msg),
+        "SOC RAW: 0x%04X HIGH: %u LOW: %u\r\n",
+        raw,
+        (raw >> 8) & 0xFF,
+        raw & 0xFF
+    );
 
+    CDC_Transmit_FS(
+        (uint8_t*)msg,
+        len
+    );
+
+    return (float)((raw >> 8) & 0xFF);
 }
 
 uint16_t MAX17048::readRegister(

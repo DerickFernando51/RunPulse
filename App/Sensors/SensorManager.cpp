@@ -98,6 +98,7 @@ bool SensorManager::init()
 bool SensorManager::sampleFast(SensorFrame& frame)
 {
     static uint8_t batteryCounter = 0;
+    static uint8_t batterySOC = 0;
     static uint8_t printCounter = 0;
 
     AccelData accel;
@@ -152,6 +153,11 @@ bool SensorManager::sampleFast(SensorFrame& frame)
                         ppgData.ir
                     );
                 }
+                else
+                    {
+                        // No finger → reset HR and SpO2
+                        PPG_SetFingerPresent(false);
+                    }
             }
         }
     }
@@ -161,22 +167,26 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
     batteryCounter++;
 
-    if (batteryCounter >= 50)
+    if (batteryCounter >= 10)
     {
         batteryCounter = 0;
 
-        frame.batteryVoltage = battery_.getVoltage();
-        frame.batterySOC     = battery_.getStateOfCharge();
+        char msg[] = "BATTERY READ START\r\n";
 
+           CDC_Transmit_FS(
+               (uint8_t*)msg,
+               strlen(msg)
+           );
+
+        batterySOC = battery_.getStateOfCharge();
 
         char usbBuf[64];
 
         int len = snprintf(
             usbBuf,
             sizeof(usbBuf),
-            "BAT %.2fV %.0f%%\r\n",
-            frame.batteryVoltage,
-            frame.batterySOC
+            "BAT SOC: %u%%\r\n",
+            batterySOC
         );
 
         CDC_Transmit_FS(
@@ -188,7 +198,7 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
     // PPG RESULT
 
-    PPG_Result_t result = PPG_GetResult();
+    PPG_Result_t ppgResult = PPG_GetResult();
 
 
     // USB DEBUG - 1 Hz
@@ -223,14 +233,17 @@ bool SensorManager::sampleFast(SensorFrame& frame)
         // BLE QUEUE
         // -------------------------
 
-        Cadence_BLE_Data_t bleData;
+        BLE_Data_t bleData;
 
-        bleData.cadence = imuResult.cadence;
+        bleData.cadence   = imuResult.cadence;
+        bleData.heartRate = ppgResult.heart_rate;
+        bleData.spo2      = ppgResult.spo2;
+        bleData.batterySOC = batterySOC;
 
-        if (cadenceBleQueue != NULL)
+        if (bleQueue != NULL)
         {
             osMessageQueuePut(
-                cadenceBleQueue,
+                bleQueue,
                 &bleData,
                 0,
                 0

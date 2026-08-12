@@ -6,7 +6,7 @@
 "./App/Sensors/MAX30102/MAX30102_Callback.o"
 "./App/Sensors/SensorManager.o"
 "./App/Sensors/sensor_objects.o"
-"./App/Tasks/BLESeqTask.o"
+"./App/Tasks/BLETask.o"
 "./App/Tasks/SensorTask.o"
 "./App/Tasks/tasks.o"
 "./Core/Src/app_debug.o"

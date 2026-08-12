@@ -3,12 +3,15 @@
 #include <stdint.h>
 #include "cmsis_os2.h"
 
-typedef struct
+typedef struct //Custom BLE Frame structure - 7 bytes
 {
     uint16_t cadence;
-} Cadence_BLE_Data_t;
+    uint16_t heartRate;
+    uint8_t  spo2;
+    uint8_t  batterySOC;
+} BLE_Data_t;
 
-extern osMessageQueueId_t cadenceBleQueue;
+extern osMessageQueueId_t bleQueue;
 
 #ifdef __cplusplus
 extern "C" {
@@ -16,7 +19,6 @@ extern "C" {
 
 void AppTasks_Init(void);
 void SensorTask(void *argument);
-void BLESeqTask(void *argument);
 void BLETask(void *argument);
 
 #ifdef __cplusplus

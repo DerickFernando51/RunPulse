@@ -4,10 +4,10 @@
 ../App/Interfaces/IBatteryMonitor.h:7:7:constexpr IBatteryMonitor::IBatteryMonitor()	1
 ../App/Interfaces/IBatteryMonitor.h:11:13:IBatteryMonitor::~IBatteryMonitor()	1
 ../App/Interfaces/IBatteryMonitor.h:11:13:virtual IBatteryMonitor::~IBatteryMonitor()	1
-../App/Sensors/MAX17048/MAX17048.cpp:8:1:MAX17048::MAX17048(I2C_HandleTypeDef*)	1
-../App/Sensors/MAX17048/MAX17048.cpp:16:6:virtual bool MAX17048::init()	1
-../App/Sensors/MAX17048/MAX17048.cpp:26:7:virtual float MAX17048::getVoltage()	1
-../App/Sensors/MAX17048/MAX17048.cpp:38:7:virtual float MAX17048::getStateOfCharge()	1
-../App/Sensors/MAX17048/MAX17048.cpp:49:10:uint16_t MAX17048::readRegister(uint8_t)	2
+../App/Sensors/MAX17048/MAX17048.cpp:10:1:MAX17048::MAX17048(I2C_HandleTypeDef*)	1
+../App/Sensors/MAX17048/MAX17048.cpp:18:6:virtual bool MAX17048::init()	1
+../App/Sensors/MAX17048/MAX17048.cpp:28:7:virtual float MAX17048::getVoltage()	1
+../App/Sensors/MAX17048/MAX17048.cpp:51:7:virtual float MAX17048::getStateOfCharge()	1
+../App/Sensors/MAX17048/MAX17048.cpp:74:10:uint16_t MAX17048::readRegister(uint8_t)	2
 ../App/Sensors/MAX17048/MAX17048.h:7:7:MAX17048::~MAX17048()	1
 ../App/Sensors/MAX17048/MAX17048.h:7:7:virtual MAX17048::~MAX17048()	1
