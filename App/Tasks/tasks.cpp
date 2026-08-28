@@ -35,7 +35,7 @@ extern "C" void AppTasks_Init(void)
             &sensorTask_attributes
         );
 
-    //bleTaskHandle =
+    bleTaskHandle =
         osThreadNew(
             BLETask,
             NULL,

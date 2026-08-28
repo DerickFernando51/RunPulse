@@ -254,4 +254,3 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
     return true;
 }
-
