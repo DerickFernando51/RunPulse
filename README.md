@@ -71,6 +71,15 @@
 </p><br>
 
 
+<p align="center">
+<img width="400" alt="image" src="https://github.com/user-attachments/assets/2813e3a5-fdc5-4a1a-8522-32cf64bfdef7" />
+ 
+
+<br>
+  <em>Fig. 8: Mobile app dashboard </em>
+</p><br>
+
+
 
 
  
