@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 
-#define IMU_BUF_LEN                     300
+#define IMU_BUF_LEN                     500
 #define SAMPLE_RATE_HZ                  100.0f
 
 #define MIN_CADENCE_SPM                 40.0f

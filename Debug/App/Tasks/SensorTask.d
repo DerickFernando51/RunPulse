@@ -47,6 +47,9 @@ App/Tasks/SensorTask.o: ../App/Tasks/SensorTask.cpp ../App/Tasks/tasks.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
+ ../App/Sensors/KX126/KX126.h ../App/Interfaces/IIMUSensor.h \
+ ../App/Interfaces/ISensor.h ../App/Sensors/MAX17048/MAX17048.h \
+ ../App/Interfaces/IBatteryMonitor.h ../App/Sensors/sensor_objects.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
  ../Core/Inc/FreeRTOSConfig.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \
@@ -54,14 +57,8 @@ App/Tasks/SensorTask.o: ../App/Tasks/SensorTask.cpp ../App/Tasks/tasks.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h \
- ../App/Sensors/KX126/KX126.h ../App/Interfaces/IIMUSensor.h \
- ../App/Interfaces/ISensor.h ../App/Sensors/MAX17048/MAX17048.h \
- ../App/Interfaces/IBatteryMonitor.h ../App/Sensors/sensor_objects.h \
- ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
  ../USB_Device/App/usbd_cdc_if.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h \
  ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h \
@@ -121,6 +118,12 @@ App/Tasks/SensorTask.o: ../App/Tasks/SensorTask.cpp ../App/Tasks/tasks.h \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
+../App/Sensors/KX126/KX126.h:
+../App/Interfaces/IIMUSensor.h:
+../App/Interfaces/ISensor.h:
+../App/Sensors/MAX17048/MAX17048.h:
+../App/Interfaces/IBatteryMonitor.h:
+../App/Sensors/sensor_objects.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
 ../Core/Inc/FreeRTOSConfig.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h:
@@ -128,17 +131,8 @@ App/Tasks/SensorTask.o: ../App/Tasks/SensorTask.cpp ../App/Tasks/tasks.h \
 ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/semphr.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/queue.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
-../App/Sensors/KX126/KX126.h:
-../App/Interfaces/IIMUSensor.h:
-../App/Interfaces/ISensor.h:
-../App/Sensors/MAX17048/MAX17048.h:
-../App/Interfaces/IBatteryMonitor.h:
-../App/Sensors/sensor_objects.h:
-../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
 ../USB_Device/App/usbd_cdc_if.h:
 ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc/usbd_cdc.h:
 ../Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_ioreq.h:

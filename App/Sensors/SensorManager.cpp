@@ -91,6 +91,7 @@ bool SensorManager::init()
         strlen(msg3)
     );
 
+
     return true;
 }
 
@@ -110,15 +111,9 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
     if (!imu_.readAcceleration(accel))
     {
-        char msg[] = "KX126 READ FAIL\r\n";
-
-        CDC_Transmit_FS(
-            (uint8_t*)msg,
-            strlen(msg)
-        );
-
         return false;
     }
+
 
     frame.ax = accel.x;
     frame.ay = accel.y;
@@ -126,7 +121,6 @@ bool SensorManager::sampleFast(SensorFrame& frame)
 
 
     // IMU DSP
-
     IMU_PushSample(
         frame.ax,
         frame.ay,
@@ -134,111 +128,105 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     );
 
 
-    //  MAX30102 DMA
+    // =========================================================
+    // MAX30102
+    // =========================================================
 
-
-    if (ppg_.startReadDMA())
+    if(ppg_.dataReady())
     {
-        if (ppg_.waitForData(10))
-        {
-            PPGData ppgData;
+        PPGData ppgData;
 
-            if (ppg_.getSample(ppgData))
+        while(ppg_.availableSamples() > 0)
+        {
+            if(!ppg_.getSample(ppgData))
             {
-                if (ppg_.fingerPresent(ppgData))
-                {
-                	// PPG DSP
-                    PPG_PushSample(
-                        ppgData.red,
-                        ppgData.ir
-                    );
-                }
-                else
-                    {
-                        // No finger → reset HR and SpO2
-                        PPG_SetFingerPresent(false);
-                    }
+                break;
+            }
+
+            if(ppg_.fingerPresent(ppgData))
+            {
+                PPG_PushSample(
+                    ppgData.red,
+                    ppgData.ir
+                );
+            }
+            else
+            {
+                PPG_SetFingerPresent(false);
             }
         }
     }
 
 
+    // Start next DMA when enough FIFO data is available
+    ppg_.startReadDMA();
+
+
+    // =========================================================
     // MAX17048 - 1 Hz
+    // =========================================================
 
     batteryCounter++;
 
-    if (batteryCounter >= 10)
+    if (batteryCounter >= 100)
     {
         batteryCounter = 0;
 
-        char msg[] = "BATTERY READ START\r\n";
-
-           CDC_Transmit_FS(
-               (uint8_t*)msg,
-               strlen(msg)
-           );
-
         batterySOC = battery_.getStateOfCharge();
-
-        char usbBuf[64];
-
-        int len = snprintf(
-            usbBuf,
-            sizeof(usbBuf),
-            "BAT SOC: %u%%\r\n",
-            batterySOC
-        );
-
-        CDC_Transmit_FS(
-            (uint8_t*)usbBuf,
-            len
-        );
     }
 
 
+    // =========================================================
     // PPG RESULT
+    // =========================================================
 
     PPG_Result_t ppgResult = PPG_GetResult();
 
 
-    // USB DEBUG - 1 Hz
+    // =========================================================
+    // USB DEBUG / BLE - 1 Hz
+    // =========================================================
+
     printCounter++;
 
-    if (printCounter >= 50)
+    if (printCounter >= 100)
     {
         printCounter = 0;
 
         IMU_Result imuResult = IMU_GetResult();
 
-        // -------------------------
-        // USB DEBUG
-        // -------------------------
 
-        char usbBuf[64];
-
-        int len = snprintf(
-            usbBuf,
-            sizeof(usbBuf),
-            "Cadence: %u SPM\r\n",
-            imuResult.cadence
-        );
-
-        CDC_Transmit_FS(
-            (uint8_t*)usbBuf,
-            len
-        );
+        // USB debug
+//        char usbBuf[64];
+//
+//        int len = snprintf(
+//            usbBuf,
+//            sizeof(usbBuf),
+//            "Cadence: %u SPM\r\n",
+//            imuResult.cadence
+//        );
+//
+//        CDC_Transmit_FS(
+//            (uint8_t*)usbBuf,
+//            len
+//        );
 
 
-        // -------------------------
-        // BLE QUEUE
-        // -------------------------
-
+        // BLE queue
         BLE_Data_t bleData;
 
-        bleData.cadence   = imuResult.cadence;
-        bleData.heartRate = ppgResult.heart_rate;
-        bleData.spo2      = ppgResult.spo2;
-        bleData.batterySOC = batterySOC;
+        bleData.cadence =
+            imuResult.cadence;
+
+        bleData.heartRate =
+            ppgResult.heart_rate;
+
+        bleData.spo2 =
+            ppgResult.spo2;
+
+        bleData.batterySOC =
+            batterySOC;
+
 
         if (bleQueue != NULL)
         {

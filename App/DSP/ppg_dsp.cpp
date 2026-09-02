@@ -3,6 +3,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "usbd_cdc_if.h"
+
 
 #define PPG_BUF_LEN          500
 #define SAMPLE_RATE_HZ       100.0f
@@ -196,14 +198,37 @@ static float calculateHR(
 }
 
 
+static float acPeakToPeak(
+    float *data,
+    uint16_t len,
+    float dc)
+{
+    float minValue = data[0] - dc;
+    float maxValue = minValue;
+
+    for (uint16_t i = 1; i < len; i++)
+    {
+        float ac = data[i] - dc;
+
+        if (ac < minValue)
+            minValue = ac;
+
+        if (ac > maxValue)
+            maxValue = ac;
+    }
+
+    return maxValue - minValue;
+}
+
 
 
 static void processPPG()
 {
 
-    float red[PPG_BUF_LEN];
 
-    float ir[PPG_BUF_LEN];
+    static float red[PPG_BUF_LEN];
+
+    static float ir[PPG_BUF_LEN];
 
 
 
@@ -231,30 +256,26 @@ static void processPPG()
 
 
 
-    float redAC =
-            rmsAC(
-                red,
-                PPG_BUF_LEN,
-                redDC
-            );
+    float irAC_RMS =
+        rmsAC(ir, PPG_BUF_LEN, irDC);
 
+    float redAC =
+        acPeakToPeak(red, PPG_BUF_LEN, redDC);
 
     float irAC =
-            rmsAC(
-                ir,
-                PPG_BUF_LEN,
-                irDC
-            );
+        acPeakToPeak(ir, PPG_BUF_LEN, irDC);
+
+
 
 
 
     float hr =
-            calculateHR(
-                ir,
-                PPG_BUF_LEN,
-                irDC,
-                irAC
-            );
+        calculateHR(
+            ir,
+            PPG_BUF_LEN,
+            irDC,
+            irAC_RMS
+        );
 
 
 
@@ -294,40 +315,54 @@ static void processPPG()
     /*
      * SpO2 estimation
      */
-
-    if(
+    if (
         redDC > 0 &&
         irDC > 0 &&
         redAC > 0 &&
         irAC > 0
     )
     {
+    	float redAC_RMS = rmsAC(red, PPG_BUF_LEN, redDC);
+    	float irAC_RMS  = rmsAC(ir, PPG_BUF_LEN, irDC);
 
-        float R =
-            (redAC / redDC)
-            /
-            (irAC / irDC);
-
-
-
-        float spo2 =
-            104.0f -
-            17.0f * R;
+    	float R =
+    	    (redAC_RMS / redDC) /
+    	    (irAC_RMS / irDC);
 
 
+        char msg[200];
 
-        if(spo2 > 100)
-            spo2 = 100;
+        snprintf(msg, sizeof(msg),
+                 "RED_DC=%.1f IR_DC=%.1f RED_AC=%.1f IR_AC=%.1f R=%.3f\r\n",
+                 redDC,
+                 irDC,
+                 redAC_RMS,
+                 irAC_RMS,
+                 R);
 
+        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+        /*
+         * Reject unreasonable ratio
+         */
+        if (R < 0.4f || R > 1.5f)
+        {
+            result.spo2 = 0;
+        }
+        else
+        {
+            float spo2 =
+                104.0f -
+                17.0f * R;
 
-        if(spo2 < 0)
-            spo2 = 0;
+            if (spo2 > 100)
+                spo2 = 100;
 
+            if (spo2 < 0)
+                spo2 = 0;
 
-
-        result.spo2 =
+            result.spo2 =
                 (uint8_t)spo2;
-
+        }
     }
     else
     {
@@ -336,7 +371,6 @@ static void processPPG()
 
 
 
-    result.signal_quality = 80;
 
 }
 

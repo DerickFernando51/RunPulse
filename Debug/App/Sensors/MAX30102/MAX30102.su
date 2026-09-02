@@ -1,13 +1,16 @@
-../App/Interfaces/IPPGSensor.h:42:13:IPPGSensor::~IPPGSensor()	16	static
-../App/Interfaces/IPPGSensor.h:42:13:virtual IPPGSensor::~IPPGSensor()	16	static
-../App/Interfaces/IPPGSensor.h:16:7:constexpr IPPGSensor::IPPGSensor()	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:16:1:MAX30102::MAX30102(I2C_HandleTypeDef*)	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:26:6:virtual bool MAX30102::init()	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:105:6:virtual bool MAX30102::startReadDMA()	32	static
-../App/Sensors/MAX30102/MAX30102.cpp:143:6:virtual bool MAX30102::getSample(PPGData&)	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:169:6:virtual bool MAX30102::fingerPresent(const PPGData&) const	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:178:6:void MAX30102::rxCompleteCallback(I2C_HandleTypeDef*)	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:197:6:virtual bool MAX30102::waitForData(uint32_t)	16	static
-../App/Sensors/MAX30102/MAX30102.cpp:206:6:bool MAX30102::writeRegister(uint8_t, uint8_t)	32	static
-../App/Sensors/MAX30102/MAX30102.h:29:7:MAX30102::~MAX30102()	16	static
-../App/Sensors/MAX30102/MAX30102.h:29:7:virtual MAX30102::~MAX30102()	16	static
+../App/Interfaces/IPPGSensor.h:39:13:IPPGSensor::~IPPGSensor()	16	static
+../App/Interfaces/IPPGSensor.h:39:13:virtual IPPGSensor::~IPPGSensor()	16	static
+../App/Interfaces/IPPGSensor.h:14:7:constexpr IPPGSensor::IPPGSensor()	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:4:1:MAX30102::MAX30102(I2C_HandleTypeDef*)	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:15:6:virtual bool MAX30102::init()	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:96:6:virtual bool MAX30102::startReadDMA()	32	static
+../App/Sensors/MAX30102/MAX30102.cpp:148:6:virtual bool MAX30102::dataReady() const	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:154:9:virtual uint8_t MAX30102::availableSamples() const	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:172:6:virtual bool MAX30102::getSample(PPGData&)	24	static
+../App/Sensors/MAX30102/MAX30102.cpp:227:6:virtual bool MAX30102::fingerPresent(const PPGData&) const	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:234:6:void MAX30102::rxCompleteCallback(I2C_HandleTypeDef*)	16	static
+../App/Sensors/MAX30102/MAX30102.cpp:251:6:bool MAX30102::writeRegister(uint8_t, uint8_t)	32	static
+../App/Sensors/MAX30102/MAX30102.cpp:271:6:bool MAX30102::readRegister(uint8_t, uint8_t&)	40	static
+../App/Sensors/MAX30102/MAX30102.cpp:287:9:uint8_t MAX30102::getFifoSamples()	24	static
+../App/Sensors/MAX30102/MAX30102.h:34:7:MAX30102::~MAX30102()	16	static
+../App/Sensors/MAX30102/MAX30102.h:34:7:virtual MAX30102::~MAX30102()	16	static

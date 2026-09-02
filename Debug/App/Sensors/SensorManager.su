@@ -1,3 +1,3 @@
 ../App/Sensors/SensorManager.cpp:17:1:SensorManager::SensorManager(MAX30102&, KX126&, MAX17048&)	24	static
 ../App/Sensors/SensorManager.cpp:29:6:bool SensorManager::init()	144	static
-../App/Sensors/SensorManager.cpp:98:6:bool SensorManager::sampleFast(SensorFrame&)	200	static
+../App/Sensors/SensorManager.cpp:99:6:bool SensorManager::sampleFast(SensorFrame&)	72	static
