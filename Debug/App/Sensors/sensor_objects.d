@@ -1,6 +1,10 @@
 App/Sensors/sensor_objects.o: ../App/Sensors/sensor_objects.cpp \
- ../App/Sensors/SensorManager.h ../App/Sensors/SensorFrame.h \
- ../App/Sensors/MAX30102/MAX30102.h ../App/Interfaces/IPPGSensor.h \
+ ../App/Sensors/SensorManager.h ../App/BLE/IBleSink.h \
+ ../App/Tasks/tasks.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
+ ../App/Interfaces/IPPGSensor.h ../App/Interfaces/IIMUSensor.h \
+ ../App/Interfaces/ISensor.h ../App/Interfaces/IBatterySensor.h \
+ ../App/Sensors/SensorFrame.h ../App/Sensors/MAX30102/MAX30102.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h \
  ../Core/Inc/stm32wbxx_hal_conf.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h \
@@ -46,10 +50,20 @@ App/Sensors/sensor_objects.o: ../App/Sensors/sensor_objects.cpp \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h \
- ../App/Sensors/KX126/KX126.h ../App/Interfaces/IIMUSensor.h \
- ../App/Interfaces/ISensor.h ../App/Sensors/MAX17048/MAX17048.h \
- ../App/Interfaces/IBatteryMonitor.h ../Core/Inc/main.h \
- ../Core/Inc/app_conf.h \
+ ../App/Sensors/KX126/KX126.h ../App/Sensors/MAX17048/MAX17048.h \
+ ../App/BLE/BleQueueSink.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h \
+ ../Core/Inc/FreeRTOSConfig.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/task.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/include/list.h \
+ ../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h \
+ ../Core/Inc/main.h ../Core/Inc/app_conf.h \
  ../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/hw.h \
  ../Core/Inc/hw_conf.h ../Core/Inc/FreeRTOSConfig.h ../Core/Inc/hw_if.h \
  ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_exti.h \
@@ -67,9 +81,15 @@ App/Sensors/sensor_objects.o: ../App/Sensors/sensor_objects.cpp \
  ../Core/Inc/app_entry.h ../Core/Inc/app_common.h \
  ../App/Sensors/MAX30102/MAX30102_Callback.h
 ../App/Sensors/SensorManager.h:
+../App/BLE/IBleSink.h:
+../App/Tasks/tasks.h:
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
+../App/Interfaces/IPPGSensor.h:
+../App/Interfaces/IIMUSensor.h:
+../App/Interfaces/ISensor.h:
+../App/Interfaces/IBatterySensor.h:
 ../App/Sensors/SensorFrame.h:
 ../App/Sensors/MAX30102/MAX30102.h:
-../App/Interfaces/IPPGSensor.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal.h:
 ../Core/Inc/stm32wbxx_hal_conf.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_dma.h:
@@ -116,10 +136,19 @@ App/Sensors/sensor_objects.o: ../App/Sensors/sensor_objects.cpp \
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_hal_tim_ex.h:
 ../Drivers/STM32WBxx_HAL_Driver/Inc/stm32wbxx_ll_system.h:
 ../App/Sensors/KX126/KX126.h:
-../App/Interfaces/IIMUSensor.h:
-../App/Interfaces/ISensor.h:
 ../App/Sensors/MAX17048/MAX17048.h:
-../App/Interfaces/IBatteryMonitor.h:
+../App/BLE/BleQueueSink.h:
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/FreeRTOS.h:
+../Core/Inc/FreeRTOSConfig.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/projdefs.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/portable.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/deprecated_definitions.h:
+../Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F/portmacro.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/mpu_wrappers.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/task.h:
+../Middlewares/Third_Party/FreeRTOS/Source/include/list.h:
+../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h:
 ../Core/Inc/main.h:
 ../Core/Inc/app_conf.h:
 ../Middlewares/ST/STM32_WPAN/interface/patterns/ble_thread/hw.h:

@@ -1,53 +1,29 @@
-#ifndef SENSOR_MANAGER_H
-#define SENSOR_MANAGER_H
-
-
+#include <IBleSink.h>
+#include "IPPGSensor.h"
+#include "IIMUSensor.h"
+#include "IBatterySensor.h"
 #include "SensorFrame.h"
-
-#include "MAX30102.h"
-#include "KX126.h"
-#include "MAX17048.h"
-
 
 
 class SensorManager
 {
-
 public:
-
-
     SensorManager(
-        MAX30102& ppg,
-        KX126& imu,
-        MAX17048& battery
-    );
-
+        IPPGSensor& ppg,
+        IIMUSensor& imu,
+        IBatterySensor& battery,
+        IBleSink& bleSink);
 
     bool init();
-
-
-    bool sampleFast(
-        SensorFrame& frame
-    );
-
-
-//    bool sampleBattery(
-//        SensorFrame& frame
-//    );
-
-
+    bool sampleFast(SensorFrame& frame);
 
 private:
+    IPPGSensor&     ppg_;
+    IIMUSensor&     imu_;
+    IBatterySensor& battery_;
+    IBleSink&       bleSink_;
 
-
-    MAX30102& ppg_;
-
-    KX126& imu_;
-
-    MAX17048& battery_;
-
-
+    uint8_t batteryCounter_ = 0;
+    uint8_t batterySOC_     = 0;
+    uint8_t printCounter_   = 0;
 };
-
-
-#endif

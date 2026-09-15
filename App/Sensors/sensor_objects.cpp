@@ -2,6 +2,7 @@
 #include "MAX30102.h"
 #include "KX126.h"
 #include "MAX17048.h"
+#include "BleQueueSink.h"
 
 #include "main.h"
 
@@ -19,12 +20,15 @@ KX126 kx126(&hspi1);
 
 MAX17048 max17048(&hi2c3);
 
+BleQueueSink bleSink;
+
 
 
 SensorManager sensors(
     max30102,
     kx126,
-    max17048
+    max17048,
+    bleSink
 );
 
 void Sensors_Init()

@@ -1,10 +1,10 @@
 #ifndef MAX17048_H
 #define MAX17048_H
 
-#include "IBatteryMonitor.h"
+#include <IBatterySensor.h>
 #include "stm32wbxx_hal.h"
 
-class MAX17048 : public IBatteryMonitor
+class MAX17048 : public IBatterySensor
 {
 public:
 

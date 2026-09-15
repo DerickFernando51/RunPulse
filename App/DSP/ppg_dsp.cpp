@@ -3,7 +3,7 @@
 #include <math.h>
 #include <string.h>
 
-#include "usbd_cdc_if.h"
+//#include "usbd_cdc_if.h"
 
 
 #define PPG_BUF_LEN          500
@@ -330,17 +330,17 @@ static void processPPG()
     	    (irAC_RMS / irDC);
 
 
-        char msg[200];
+//        char msg[200];
+//
+//        snprintf(msg, sizeof(msg),
+//                 "RED_DC=%.1f IR_DC=%.1f RED_AC=%.1f IR_AC=%.1f R=%.3f\r\n",
+//                 redDC,
+//                 irDC,
+//                 redAC_RMS,
+//                 irAC_RMS,
+//                 R);
 
-        snprintf(msg, sizeof(msg),
-                 "RED_DC=%.1f IR_DC=%.1f RED_AC=%.1f IR_AC=%.1f R=%.3f\r\n",
-                 redDC,
-                 irDC,
-                 redAC_RMS,
-                 irAC_RMS,
-                 R);
-
-        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
+//        CDC_Transmit_FS((uint8_t*)msg, strlen(msg));
         /*
          * Reject unreasonable ratio
          */
