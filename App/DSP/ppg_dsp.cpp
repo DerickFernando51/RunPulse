@@ -421,124 +421,110 @@ void PPG_Init(void)
 
 
 
-
-
-//void PPG_PushSample(
-//        uint32_t red,
-//        uint32_t ir)
-//{
-//
-//    redBuffer[bufferIndex] = red;
-//
-//    irBuffer[bufferIndex] = ir;
-//
-//
-//
-//    bufferIndex++;
-//
-//
-//
-//    if(bufferIndex >= PPG_BUF_LEN)
-//    {
-//
-//        processPPG();
-//
-//
-//        bufferIndex = 0;
-//
-//    }
-//
-//}
-
-
-//Pytest logging
 void PPG_PushSample(uint32_t red, uint32_t ir)
 {
-    static uint8_t samplesOnLine = 0;
-    static uint32_t lineNumber = 1;
-
-    // Buffer for one complete line.
-    // 10 samples + line number + separators + newline.
-    static char lineBuffer[1536];
-    static uint16_t lineIndex = 0;
-
-    // --------------------------------------------------------
-    // Add line number at the start of a new line
-    // --------------------------------------------------------
-
-    if (samplesOnLine == 0)
-    {
-        lineIndex = snprintf(
-            lineBuffer,
-            sizeof(lineBuffer),
-            "%lu: ",
-            (unsigned long)lineNumber
-        );
-    }
-
-    // --------------------------------------------------------
-    // Add current RED,IR sample
-    // --------------------------------------------------------
-
-    int written = snprintf(
-        &lineBuffer[lineIndex],
-        sizeof(lineBuffer) - lineIndex,
-        "%lu,%lu;",
-        (unsigned long)red,
-        (unsigned long)ir
-    );
-
-    if (written > 0)
-    {
-        lineIndex += written;
-    }
-
-    samplesOnLine++;
-
-    // --------------------------------------------------------
-    // After 20 samples, add newline and transmit entire line
-    // --------------------------------------------------------
-
-    if (samplesOnLine >= 60)
-    {
-        int written = snprintf(
-            &lineBuffer[lineIndex],
-            sizeof(lineBuffer) - lineIndex,
-            "\r\n"
-        );
-
-        if (written > 0)
-        {
-            lineIndex += written;
-        }
-
-        // Send the COMPLETE 10-sample line in one USB transfer
-        CDC_Transmit_FS(
-            (uint8_t*)lineBuffer,
-            lineIndex
-        );
-
-        // Reset for next line
-        samplesOnLine = 0;
-        lineIndex = 0;
-        lineNumber++;
-    }
-
-    // --------------------------------------------------------
-    // Store sample for PPG DSP
-    // --------------------------------------------------------
-
     redBuffer[bufferIndex] = red;
-    irBuffer[bufferIndex] = ir;
+    irBuffer[bufferIndex]  = ir;
 
     bufferIndex++;
 
-    if (bufferIndex >= PPG_BUF_LEN)
+    if(bufferIndex >= PPG_BUF_LEN)
     {
         processPPG();
         bufferIndex = 0;
     }
 }
+
+
+/* Pytest logging - CDC TRANSMIT */
+//void PPG_PushSample(uint32_t red, uint32_t ir)
+//{
+//    static uint8_t samplesOnLine = 0;
+//    static uint32_t lineNumber = 1;
+//
+//    // Buffer for one complete line.
+//    // 10 samples + line number + separators + newline.
+//    static char lineBuffer[1536];
+//    static uint16_t lineIndex = 0;
+//
+//    // --------------------------------------------------------
+//    // Add line number at the start of a new line
+//    // --------------------------------------------------------
+//
+//    if (samplesOnLine == 0)
+//    {
+//        lineIndex = snprintf(
+//            lineBuffer,
+//            sizeof(lineBuffer),
+//            "%lu: ",
+//            (unsigned long)lineNumber
+//        );
+//    }
+//
+//    // --------------------------------------------------------
+//    // Add current RED,IR sample
+//    // --------------------------------------------------------
+//
+//    int written = snprintf(
+//        &lineBuffer[lineIndex],
+//        sizeof(lineBuffer) - lineIndex,
+//        "%lu,%lu;",
+//        (unsigned long)red,
+//        (unsigned long)ir
+//    );
+//
+//    if (written > 0)
+//    {
+//        lineIndex += written;
+//    }
+//
+//    samplesOnLine++;
+//
+//    // --------------------------------------------------------
+//    // After 20 samples, add newline and transmit entire line
+//    // --------------------------------------------------------
+//
+//    if (samplesOnLine >= 60)
+//    {
+//        int written = snprintf(
+//            &lineBuffer[lineIndex],
+//            sizeof(lineBuffer) - lineIndex,
+//            "\r\n"
+//        );
+//
+//        if (written > 0)
+//        {
+//            lineIndex += written;
+//        }
+//
+//        // Send the COMPLETE 10-sample line in one USB transfer
+//        CDC_Transmit_FS(
+//            (uint8_t*)lineBuffer,
+//            lineIndex
+//        );
+//
+//        // Reset for next line
+//        samplesOnLine = 0;
+//        lineIndex = 0;
+//        lineNumber++;
+//    }
+//
+//    // --------------------------------------------------------
+//    // Store sample for PPG DSP
+//    // --------------------------------------------------------
+//
+//    redBuffer[bufferIndex] = red;
+//    irBuffer[bufferIndex] = ir;
+//
+//    bufferIndex++;
+//
+//    if (bufferIndex >= PPG_BUF_LEN)
+//    {
+//        processPPG();
+//        bufferIndex = 0;
+//    }
+//}
+
 
 
 
