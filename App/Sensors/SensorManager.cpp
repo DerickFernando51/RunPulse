@@ -159,21 +159,21 @@ bool SensorManager::sampleFast(SensorFrame& frame)
     // USB DEBUG / BLE - 1 Hz
     // =========================================================
     printCounter_++;
-
-    if (printCounter_ >= 100)
-    {
-        printCounter_ = 0;
-
-        IMU_Result imuResult = IMU_GetResult();
-
-        BLE_Data_t bleData;
-        bleData.cadence     = imuResult.cadence;
-        bleData.heartRate   = ppgResult.heart_rate;
-        bleData.spo2        = ppgResult.spo2;
-        bleData.batterySOC  = batterySOC_;
-
-        bleSink_.publish(bleData);
-    }
+//
+//    if (printCounter_ >= 100)
+//    {
+//        printCounter_ = 0;
+//
+//        IMU_Result imuResult = IMU_GetResult();
+//
+//        BLE_Data_t bleData;
+//        bleData.cadence     = imuResult.cadence;
+//        bleData.heartRate   = ppgResult.heart_rate;
+//        bleData.spo2        = ppgResult.spo2;
+//        bleData.batterySOC  = batterySOC_;
+//
+//        bleSink_.publish(bleData);
+//    }
 
     return true;
 }

@@ -43,7 +43,7 @@ bool KX126::init()
 
     writeRegister(
         KX126_ODCNTL,
-        0x02
+        0x03
     );
 
 

@@ -40,7 +40,7 @@ bool MAX30102::init()
     // FIFO configuration
     if(!writeRegister(
             REG_FIFO_CONFIG,
-            0x4F))
+            0x1F))
     {
         return false;
     }

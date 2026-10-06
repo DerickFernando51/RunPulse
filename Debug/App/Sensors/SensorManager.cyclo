@@ -1,3 +1,3 @@
 ../App/Sensors/SensorManager.cpp:13:1:SensorManager::SensorManager(IPPGSensor&, IIMUSensor&, IBatterySensor&, IBleSink&)	1
 ../App/Sensors/SensorManager.cpp:27:6:bool SensorManager::init()	4
-../App/Sensors/SensorManager.cpp:97:6:bool SensorManager::sampleFast(SensorFrame&)	8
+../App/Sensors/SensorManager.cpp:97:6:bool SensorManager::sampleFast(SensorFrame&)	7

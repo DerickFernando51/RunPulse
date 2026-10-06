@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct IMU_Result
 {
     uint16_t cadence;
@@ -19,5 +23,9 @@ void IMU_PushSample(
 );
 
 IMU_Result IMU_GetResult(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
