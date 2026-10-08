@@ -1,4 +1,5 @@
 #include "imu_dsp.h"
+#include "tasks.h"
 
 #include <math.h>
 #include <string.h>
@@ -22,7 +23,9 @@
 
 // Internal data
 
-static float accelBuffer[IMU_BUF_LEN];
+static float accelBuf[2][IMU_BUF_LEN];
+static uint8_t writeBuf = 0;
+static volatile uint8_t readyBuf = 0;
 static uint16_t bufferIndex = 0;
 
 static IMU_Result result = {0};
@@ -64,7 +67,7 @@ static float mean(
 // Smooth acceleration signal
 
 static void smooth(
-    float *input,
+    const float *input,
     float *output,
     uint16_t len)
 {
@@ -305,15 +308,11 @@ static float calculateCadence(
 
 // Process cadence
 
-static void processCadence()
+static void processCadence(const float *samples)
 {
-    float accel[IMU_BUF_LEN];
+    static float accel[IMU_BUF_LEN];   // static: keeps it off the stack
 
-    smooth(
-        accelBuffer,
-        accel,
-        IMU_BUF_LEN
-    );
+    smooth(samples, accel, IMU_BUF_LEN);
 
     float dc =
         mean(
@@ -383,49 +382,33 @@ static void processCadence()
 
 void IMU_Init(void)
 {
-    memset(
-        accelBuffer,
-        0,
-        sizeof(accelBuffer)
-    );
-
+    memset(accelBuf, 0, sizeof(accelBuf));
+    writeBuf = 0;
+    readyBuf = 0;
     bufferIndex = 0;
-
     cadenceFiltered = 0.0f;
-
-    memset(
-        &result,
-        0,
-        sizeof(result)
-    );
+    memset(&result, 0, sizeof(result));
 }
 
 
 // Push IMU sample
 
-void IMU_PushSample(
-    float ax,
-    float ay,
-    float az)
+void IMU_PushSample(float ax, float ay, float az)
 {
-    float accMag =
-        magnitude(
-            ax,
-            ay,
-            az
-        );
-
-    accelBuffer[bufferIndex] =
-        accMag;
-
-    bufferIndex++;
+    accelBuf[writeBuf][bufferIndex++] = magnitude(ax, ay, az);
 
     if(bufferIndex >= IMU_BUF_LEN)
     {
-        processCadence();
-
+        readyBuf = writeBuf;     // hand this buffer to the DSP task
+        writeBuf ^= 1;           // keep writing into the other one
         bufferIndex = 0;
+        DSP_NotifyIMU();         // wake DspTask (does not run the math)
     }
+}
+
+void IMU_Process(void)           // called by DspTask
+{
+    processCadence(accelBuf[readyBuf]);
 }
 
 

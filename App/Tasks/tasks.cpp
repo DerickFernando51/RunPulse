@@ -22,11 +22,13 @@ static const osThreadAttr_t bleTask_attributes =
 
 extern "C" void AppTasks_Init(void)
 {
-	bleQueue = osMessageQueueNew(
-	        5,
-	        sizeof(BLE_Data_t),
-	        NULL
-	    );
+    bleQueue = osMessageQueueNew(
+            5,
+            sizeof(BLE_Data_t),
+            NULL
+        );
+
+    DspTask_Init();
 
     sensorTaskHandle =
         osThreadNew(

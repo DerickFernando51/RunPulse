@@ -21,6 +21,11 @@ void AppTasks_Init(void);
 void SensorTask(void *argument);
 void BLETask(void *argument);
 
+// DSP task
+void DspTask_Init(void);     // creates the task
+void DSP_NotifyIMU(void);    // called when an IMU buffer is full
+void DSP_NotifyPPG(void);    // called when a PPG buffer is full
+
 #ifdef __cplusplus
 }
 #endif

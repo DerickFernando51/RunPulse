@@ -6,16 +6,19 @@
 # Add inputs and outputs from these tool invocations to the build variables 
 CPP_SRCS += \
 ../App/Tasks/BLETask.cpp \
+../App/Tasks/DSPTask.cpp \
 ../App/Tasks/SensorTask.cpp \
 ../App/Tasks/tasks.cpp 
 
 OBJS += \
 ./App/Tasks/BLETask.o \
+./App/Tasks/DSPTask.o \
 ./App/Tasks/SensorTask.o \
 ./App/Tasks/tasks.o 
 
 CPP_DEPS += \
 ./App/Tasks/BLETask.d \
+./App/Tasks/DSPTask.d \
 ./App/Tasks/SensorTask.d \
 ./App/Tasks/tasks.d 
 
@@ -27,7 +30,7 @@ App/Tasks/%.o App/Tasks/%.su App/Tasks/%.cyclo: ../App/Tasks/%.cpp App/Tasks/sub
 clean: clean-App-2f-Tasks
 
 clean-App-2f-Tasks:
-	-$(RM) ./App/Tasks/BLETask.cyclo ./App/Tasks/BLETask.d ./App/Tasks/BLETask.o ./App/Tasks/BLETask.su ./App/Tasks/SensorTask.cyclo ./App/Tasks/SensorTask.d ./App/Tasks/SensorTask.o ./App/Tasks/SensorTask.su ./App/Tasks/tasks.cyclo ./App/Tasks/tasks.d ./App/Tasks/tasks.o ./App/Tasks/tasks.su
+	-$(RM) ./App/Tasks/BLETask.cyclo ./App/Tasks/BLETask.d ./App/Tasks/BLETask.o ./App/Tasks/BLETask.su ./App/Tasks/DSPTask.cyclo ./App/Tasks/DSPTask.d ./App/Tasks/DSPTask.o ./App/Tasks/DSPTask.su ./App/Tasks/SensorTask.cyclo ./App/Tasks/SensorTask.d ./App/Tasks/SensorTask.o ./App/Tasks/SensorTask.su ./App/Tasks/tasks.cyclo ./App/Tasks/tasks.d ./App/Tasks/tasks.o ./App/Tasks/tasks.su
 
 .PHONY: clean-App-2f-Tasks
 

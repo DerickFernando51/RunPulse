@@ -22,6 +22,8 @@ void IMU_PushSample(
     float az
 );
 
+void IMU_Process(void);          // called by DspTask when a buffer is full
+
 IMU_Result IMU_GetResult(void);
 
 #ifdef __cplusplus

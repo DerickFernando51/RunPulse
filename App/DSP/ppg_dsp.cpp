@@ -1,9 +1,10 @@
 #include "ppg_dsp.h"
+#include "tasks.h"
 
 #include <math.h>
 #include <string.h>
 
-#include "usbd_cdc_if.h"
+//#include "usbd_cdc_if.h"
 
 
 #define PPG_BUF_LEN          500
@@ -16,9 +17,10 @@
 #define MIN_PEAK_DISTANCE_SAMPLES 60
 #define PEAK_THRESHOLD       0.25f
 
-
-static uint32_t redBuffer[PPG_BUF_LEN];
-static uint32_t irBuffer[PPG_BUF_LEN];
+static uint32_t redBuf[2][PPG_BUF_LEN];
+static uint32_t irBuf[2][PPG_BUF_LEN];
+static uint8_t writeBuf = 0;
+static volatile uint8_t readyBuf = 0;
 
 static uint16_t bufferIndex = 0;
 
@@ -66,13 +68,11 @@ static float rmsAC(
 
 
 static void smooth(
-        uint32_t *input,
+        const uint32_t *input,
         float *output,
         uint16_t len)
 {
-
     output[0] = input[0];
-
 
     for(uint16_t i = 1; i < len-1; i++)
     {
@@ -84,10 +84,8 @@ static void smooth(
             ) / 3.0f;
     }
 
-
     output[len-1] = input[len-1];
 }
-
 
 
 
@@ -222,38 +220,19 @@ static float acPeakToPeak(
 
 
 
-static void processPPG()
+static void processPPG(const uint32_t *redIn, const uint32_t *irIn)
 {
-
-
     static float red[PPG_BUF_LEN];
-
     static float ir[PPG_BUF_LEN];
 
+    smooth(redIn, red, PPG_BUF_LEN);
+    smooth(irIn,  ir,  PPG_BUF_LEN);
 
 
-    smooth(
-        redBuffer,
-        red,
-        PPG_BUF_LEN
-    );
-
-
-    smooth(
-        irBuffer,
-        ir,
-        PPG_BUF_LEN
-    );
-
-
-
-    float redDC =
-            mean(red,PPG_BUF_LEN);
-
+    float redDC = mean(red, PPG_BUF_LEN);
 
     float irDC =
             mean(ir,PPG_BUF_LEN);
-
 
 
     float irAC_RMS =
@@ -264,8 +243,6 @@ static void processPPG()
 
     float irAC =
         acPeakToPeak(ir, PPG_BUF_LEN, irDC);
-
-
 
 
 
@@ -323,7 +300,6 @@ static void processPPG()
     )
     {
     	float redAC_RMS = rmsAC(red, PPG_BUF_LEN, redDC);
-    	float irAC_RMS  = rmsAC(ir, PPG_BUF_LEN, irDC);
 
     	float R =
     	    (redAC_RMS / redDC) /
@@ -369,9 +345,6 @@ static void processPPG()
         result.spo2 = 0;
     }
 
-
-
-
 }
 
 void PPG_SetFingerPresent(bool present)
@@ -390,48 +363,33 @@ void PPG_SetFingerPresent(bool present)
 
 void PPG_Init(void)
 {
+    memset(redBuf, 0, sizeof(redBuf));
+    memset(irBuf,  0, sizeof(irBuf));
 
-    memset(
-        redBuffer,
-        0,
-        sizeof(redBuffer)
-    );
-
-
-    memset(
-        irBuffer,
-        0,
-        sizeof(irBuffer)
-    );
-
-
+    writeBuf = 0;
+    readyBuf = 0;
     bufferIndex = 0;
-
 
     hrFiltered = 0;
 
-
-    memset(
-        &result,
-        0,
-        sizeof(result)
-    );
-
+    memset(&result, 0, sizeof(result));
 }
 
 
 
 void PPG_PushSample(uint32_t red, uint32_t ir)
 {
-    redBuffer[bufferIndex] = red;
-    irBuffer[bufferIndex]  = ir;
+    redBuf[writeBuf][bufferIndex] = red;
+    irBuf[writeBuf][bufferIndex]  = ir;
 
     bufferIndex++;
 
     if(bufferIndex >= PPG_BUF_LEN)
     {
-        processPPG();
+        readyBuf = writeBuf;
+        writeBuf ^= 1;
         bufferIndex = 0;
+        DSP_NotifyPPG();         // wake DspTask
     }
 }
 
@@ -526,6 +484,10 @@ void PPG_PushSample(uint32_t red, uint32_t ir)
 //}
 
 
+void PPG_Process(void)           // called by DspTask
+{
+    processPPG(redBuf[readyBuf], irBuf[readyBuf]);
+}
 
 
 PPG_Result_t PPG_GetResult(void)
